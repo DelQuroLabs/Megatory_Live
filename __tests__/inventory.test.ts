@@ -24,7 +24,6 @@ describe('Inventory Domain', () => {
       'MANUFACTURER NUMBER': ' 12345 ',
       'ITEM DESCRIPTION': 'Meloxicam',
       'COUNT': '10',
-      
     };
     const item = templateRowToItem(row);
     expect(item.barcode).toBe('12345');
