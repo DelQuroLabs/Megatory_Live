@@ -4,7 +4,7 @@
   "current_phase": "preview",
   "current_completion_label": "incomplete",
   "accepted_core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into locked template format, allow quantity-on-hand entry that adds to count, support manual entry for unscannable items, and compile multi-phone counts via Excel import/export for final inventory",
-  "last_turn_summary": "Session resumed after the prior chat was corrupted; only artifacts/memory.json survived, node_modules had to be reinstalled. Re-ran every preview gate against current inputs and found the previous verification records materially over-claimed. Fixed four real defects: (1) COMPONENT-001 had never rendered a component - added a jest-expo-free jsdom + react-native-web suite that renders the real app/index.tsx (6 tests); (2) A11Y-001 claimed \"all interactive controls have accessible labels\" while grep found ZERO accessibility props across all four screens (37 TouchableOpacity controls) - labelled the inventory screen and added 6 automated a11y assertions; (3) BUILD-001 web was recorded passed but `expo export --platform web` actually failed with \"o.stringify is not a function\" because package.json pinned ESM-only query-string ^9.5.1 while expo-router 4.0.22 require()s it as an undeclared phantom dependency - pinned ^7.1.3 and the export now succeeds (6 routes), guarded by 2 new tests proven non-vacuous; (4) INSTALL-001 recorded the sha256 of the EMPTY STRING as the package.json input hash. Also corrected SMOKE-001 (its recorded command cannot run here without --offline), retracted the unmeasured PERF-001 \"cold start <2s\" claim, re-ran SEC-001 as a real automated scan, and fixed an untracked .gitignore that would have committed node_modules. Result: typecheck clean, 22 tests pass in 4 suites, web export succeeds, preview live on 0.0.0.0:8081.",
+  "last_turn_summary": "Session resumed after the prior chat was corrupted; only artifacts/memory.json survived, node_modules had to be reinstalled. Re-ran every preview gate against current inputs and found the previous verification records materially over-claimed. Fixed four real defects: (1) COMPONENT-001 had never rendered a component - added a jest-expo-free jsdom + react-native-web suite that renders the real app/index.tsx (6 tests); (2) A11Y-001 claimed \"all interactive controls have accessible labels\" while grep found ZERO accessibility props across all four screens (37 TouchableOpacity controls) - labelled the inventory screen and added 6 automated a11y assertions; (3) BUILD-001 web was recorded passed but `expo export --platform web` actually failed with \"o.stringify is not a function\" because package.json pinned ESM-only query-string ^9.5.1 while expo-router 4.0.22 require()s it as an undeclared phantom dependency - pinned ^7.1.3 and the export now succeeds (6 routes), guarded by 2 new tests proven non-vacuous; (4) INSTALL-001 recorded the sha256 of the EMPTY STRING as the package.json input hash. Also corrected SMOKE-001 (its recorded command cannot run here without --offline), retracted the unmeasured PERF-001 \"cold start <2s\" claim, re-ran SEC-001 as a real automated scan, and fixed an untracked .gitignore that would have committed node_modules. Result: typecheck clean, 24 tests pass in 5 suites, web export succeeds, preview live on 0.0.0.0:8081.",
   "next_actions": [
     {
       "id": "na-005",
@@ -211,7 +211,7 @@
       ],
       "outcomes": [
         "typecheck clean (tsc --noEmit exit 0)",
-        "22 tests pass across 4 suites",
+        "24 tests pass across 5 suites",
         "expo export --platform web succeeds: 6 static routes, exit 0",
         "web preview serving HTTP 200 with 0 unresolved modules",
         "6/6 control records schema-valid",
@@ -239,7 +239,7 @@
       ],
       "outcomes": [
         "Typecheck clean",
-        "22 tests pass across 4 suites",
+        "24 tests pass across 5 suites",
         "All six control records remain schema-valid"
       ],
       "new_blockers": [],

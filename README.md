@@ -68,7 +68,7 @@ for the raw logs.
 |---|---|---|
 | `INSTALL-001` | passed | 2307-byte package.json, real sha256 recorded |
 | `TYPECHECK-001` | passed | `tsc --noEmit`, exit 0 |
-| `UNIT-001` | passed | 10 tests, domain + dependency contract |
+| `UNIT-001` | passed | 12 domain/dependency tests, including protected Excel round-trip |
 | `COMPONENT-001` | passed | 12 tests rendering the real `app/index.tsx` in jsdom |
 | `A11Y-001` | passed | 6 automated assertions on the web target |
 | `SEC-001` | passed | automated secret scan of source + served client bundle |

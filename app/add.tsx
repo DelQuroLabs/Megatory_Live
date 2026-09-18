@@ -36,7 +36,8 @@ export default function AddScreen() {
   const update = (field: keyof InventoryItem, value: any) => setItem(prev => ({ ...prev, [field]: value }));
 
   const handleSuggest = (drugName: string) => {
-    const lower = drugName.toLowerCase();
+    const lower = drugName.trim().toLowerCase();
+    if (!lower) return;
     const match = COMMON_VET_DRUGS.find(d => d.drugName?.toLowerCase().includes(lower));
     if (match) {
       setItem(prev => ({
@@ -61,7 +62,7 @@ export default function AddScreen() {
     let newItem: InventoryItem = { ...item };
     if (isAddMode) {
       const addQty = Number(qtyToAdd);
-      if (isNaN(addQty)) { Alert.alert('Invalid quantity', 'Enter a number to add'); return; }
+      if (!qtyToAdd.trim() || !Number.isFinite(addQty) || addQty <= 0) { Alert.alert('Invalid quantity', 'Enter a positive number to add'); return; }
       newItem.quantityOnHand = (newItem.quantityOnHand || 0) + addQty;
       newItem.lastCountedAt = new Date().toISOString();
       newItem.countedBy = deviceName;
@@ -144,7 +145,7 @@ function Field({ label, value, onChange, placeholder, keyboardType, multiline }:
   return (
     <View style={{ marginBottom: 12 }}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput style={[styles.input, multiline && { height: 70, textAlignVertical: 'top' }]} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#94a3b8" accessibilityLabel={label.replace(/ \*$/, '')} keyboardType={keyboardType || 'default'} multiline={!!multiline} />
+      <TextInput style={[styles.input, multiline && { height: 70, textAlignVertical: 'top' }]} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#94a3b8" accessibilityLabel={label.replace(/\s*\*.*$/, '')} keyboardType={keyboardType || 'default'} multiline={!!multiline} />
     </View>
   );
 }
