@@ -20,11 +20,11 @@
 Your protected master file only allows editing counts. Our app generates Excel with **exact column order** designed to copy/paste:
 
 ```
-A Item ID | B Barcode | C Drug Name | D Generic Name | E Manufacturer | F Strength/Concentration | G Form | H Package Size | I Category | J Location | K Expiration Date | L Lot Number | M Controlled (Y/N) | N Controlled Schedule | O Unit | P Quantity On Hand (EDITABLE) | Q Counted By | R Last Counted | S Notes
+A SKU | B MANUFACTURER | C MANUFACTURER NUMBER | D ITEM DESCRIPTION | E PACK PRICE | F PACK TYPE | G PACK UNIT | H COUNT TYPE | I COUNT (EDITABLE) | J ITEM PRICE | K VALUE ON HAND | L LOG 1 | M LOG 2 | N LOG 3 | O LOG 4 | P LOG 5
 ```
 
 - **Locked columns (A-O, Q-S)**: Reference only, auto-filled from scans. In your master, these would be protected.
-- **Editable column (P)**: Quantity On Hand — this is what you edit in master. Our export puts the final counts here.
+- **Editable column (I)**: COUNT — this is what you edit in the supplied master. Our export puts the final counts here.
 - **Instructions sheet**: Second sheet in export explains workflow.
 
 ### 3. Import / Export / Multi-Phone Compile
@@ -66,7 +66,7 @@ Camera scanning works on native iOS/Android. On web, scanning uses camera if bro
 ### 7. Next Steps to Match Your Exact Template
 If your protected master has different column order or names:
 1. Send me your template file (or screenshot of headers)
-2. I will update TEMPLATE_COLUMNS in lib/domain/inventory.ts to match exactly
+2. TEMPLATE_COLUMNS in lib/domain/inventory.ts matches the supplied master headers exactly
 3. Re-export will then be 1:1 copy-paste ready
 
 Currently tolerant parser handles variations (e.g., "Drug" vs "Drug Name", "Qty" vs "Quantity On Hand").

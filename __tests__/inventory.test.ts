@@ -11,9 +11,9 @@ describe('Inventory Domain', () => {
   test('itemToTemplateRow respects column order', () => {
     const item = createEmptyItem({ drugName: 'Carprofen', barcode: '123', quantityOnHand: 5 });
     const row = itemToTemplateRow(item);
-    expect(row['Drug Name']).toBe('Carprofen');
-    expect(row['Barcode']).toBe('123');
-    expect(row['Quantity On Hand']).toBe(5);
+    expect(row['ITEM DESCRIPTION']).toBe('Carprofen');
+    expect(row['MANUFACTURER NUMBER']).toBe('123');
+    expect(row['COUNT']).toBe(5);
     TEMPLATE_COLUMNS.forEach(col => {
       expect(row).toHaveProperty(col);
     });
@@ -21,16 +21,15 @@ describe('Inventory Domain', () => {
 
   test('templateRowToItem parses tolerant keys', () => {
     const row = {
-      'Barcode': ' 12345 ',
-      'Drug Name': 'Meloxicam',
-      'Quantity On Hand': '10',
-      'Controlled (Y/N)': 'Y',
+      'MANUFACTURER NUMBER': ' 12345 ',
+      'ITEM DESCRIPTION': 'Meloxicam',
+      'COUNT': '10',
+      
     };
     const item = templateRowToItem(row);
     expect(item.barcode).toBe('12345');
     expect(item.drugName).toBe('Meloxicam');
     expect(item.quantityOnHand).toBe(10);
-    expect(item.controlled).toBe(true);
   });
 
   test('mergeInventories adds quantities by barcode', () => {

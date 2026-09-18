@@ -8,11 +8,11 @@
   "next_actions": [
     {
       "id": "na-005",
-      "action": "User to review the live web preview and confirm the 19 template columns match their protected master (still the product-level blocker)"
+      "action": "User to review the live web preview and confirm the 16 protected master columns match their protected master (still the product-level blocker)"
     },
     {
       "id": "na-006",
-      "action": "If columns differ, update TEMPLATE_COLUMNS in lib/domain/inventory.ts to be 1:1",
+      "action": "If the original workbook differs from the supplied image, update TEMPLATE_COLUMNS in lib/domain/inventory.ts and rerun export tests",
       "depends_on": [
         "na-005"
       ]
@@ -38,9 +38,9 @@
   "open_items": [
     {
       "id": "oi-001",
-      "summary": "Confirm exact column order of the user's protected master template",
+      "summary": "Confirm exact protected master headers (now supplied as an image)",
       "opened_at": "2026-09-17T00:00:00Z",
-      "notes": "Current template uses 19 columns with Qty as the only editable concept. Needs the user's file to map 1:1. Unchanged from last session."
+      "notes": "Current template uses 16 columns with Qty as the only editable concept. Needs the user's file to map 1:1. Unchanged from last session."
     },
     {
       "id": "oi-002",
@@ -95,7 +95,7 @@
     {
       "id": "pq-001",
       "asked_at": "2026-09-18T00:46:00Z",
-      "question": "Can you share (or paste the header row of) your protected master Excel template so TEMPLATE_COLUMNS can be made 1:1?",
+      "question": "If available, can you share the original workbook to verify formatting, hidden columns, and formulas beyond the supplied image?",
       "context": "Open since 2026-09-17 as oi-001. Everything downstream of the export format depends on it."
     },
     {
@@ -126,7 +126,7 @@
     },
     {
       "id": "d-004",
-      "summary": "Template columns: 19 columns, Qty On Hand is editable, others locked concept",
+      "summary": "Template columns: 16 columns, Qty On Hand is editable, others locked concept",
       "source_path": "lib/domain/inventory.ts",
       "decided_at": "2026-09-17T22:00:00Z"
     },

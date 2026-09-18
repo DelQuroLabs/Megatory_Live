@@ -68,27 +68,23 @@ export interface InventoryItem {
 }
 
 export const TEMPLATE_COLUMNS = [
-  'Item ID',
-  'Barcode',
-  'Drug Name',
-  'Generic Name',
-  'Manufacturer',
-  'Strength/Concentration',
-  'Form',
-  'Package Size',
-  'Category',
-  'Location',
-  'Expiration Date',
-  'Lot Number',
-  'Controlled (Y/N)',
-  'Controlled Schedule',
-  'Unit',
-  'Quantity On Hand', // <-- only editable column in protected master
-  'Counted By',
-  'Last Counted',
-  'Notes',
+  'SKU',
+  'MANUFACTURER',
+  'MANUFACTURER NUMBER',
+  'ITEM DESCRIPTION',
+  'PACK PRICE',
+  'PACK TYPE',
+  'PACK UNIT',
+  'COUNT TYPE',
+  'COUNT',
+  'ITEM PRICE',
+  'VALUE ON HAND',
+  'LOG 1',
+  'LOG 2',
+  'LOG 3',
+  'LOG 4',
+  'LOG 5',
 ] as const;
-
 export type TemplateColumn = typeof TEMPLATE_COLUMNS[number];
 
 export function createEmptyItem(overrides: Partial<InventoryItem> = {}): InventoryItem {
@@ -122,29 +118,28 @@ export function generateId(): string {
 }
 
 export function itemToTemplateRow(item: InventoryItem): Record<TemplateColumn, string | number> {
+  // This is the protected master layout supplied by the user (16 columns).
+  // Fields not represented by the master remain intentionally blank rather than
+  // inventing values that could overwrite protected reference data.
   return {
-    'Item ID': item.id,
-    'Barcode': item.barcode,
-    'Drug Name': item.drugName,
-    'Generic Name': item.genericName,
-    'Manufacturer': item.manufacturer,
-    'Strength/Concentration': item.concentration,
-    'Form': item.form,
-    'Package Size': item.packageSize,
-    'Category': item.category,
-    'Location': item.location,
-    'Expiration Date': item.expirationDate,
-    'Lot Number': item.lotNumber,
-    'Controlled (Y/N)': item.controlled ? 'Y' : 'N',
-    'Controlled Schedule': item.controlledSchedule || '',
-    'Unit': item.unit,
-    'Quantity On Hand': item.quantityOnHand,
-    'Counted By': item.countedBy,
-    'Last Counted': item.lastCountedAt,
-    'Notes': item.notes,
+    'SKU': item.id,
+    'MANUFACTURER': item.manufacturer,
+    'MANUFACTURER NUMBER': item.barcode,
+    'ITEM DESCRIPTION': item.drugName,
+    'PACK PRICE': '',
+    'PACK TYPE': item.form,
+    'PACK UNIT': item.packageSize,
+    'COUNT TYPE': item.unit,
+    'COUNT': item.quantityOnHand,
+    'ITEM PRICE': '',
+    'VALUE ON HAND': '',
+    'LOG 1': '',
+    'LOG 2': '',
+    'LOG 3': '',
+    'LOG 4': '',
+    'LOG 5': '',
   };
 }
-
 export function templateRowToItem(row: Record<string, any>): InventoryItem {
   // tolerant parsing - handles both our template and user variations
   const get = (keys: string[]) => {
@@ -163,22 +158,22 @@ export function templateRowToItem(row: Record<string, any>): InventoryItem {
   };
 
   return {
-    id: get(['Item ID', 'ID', 'ItemID']) || generateId(),
-    barcode: get(['Barcode', 'Bar Code', 'NDC', 'UPC']),
-    drugName: get(['Drug Name', 'Drug', 'Name', 'Brand Name']),
+    id: get(['SKU', 'Item ID', 'ID', 'ItemID']) || generateId(),
+    barcode: get(['MANUFACTURER NUMBER', 'Barcode', 'Bar Code', 'NDC', 'UPC']),
+    drugName: get(['ITEM DESCRIPTION', 'Drug Name', 'Drug', 'Name', 'Brand Name']),
     genericName: get(['Generic Name', 'Generic']),
-    manufacturer: get(['Manufacturer', 'Mfr']),
+    manufacturer: get(['MANUFACTURER', 'Manufacturer', 'Mfr']),
     concentration: get(['Strength/Concentration', 'Strength', 'Concentration']),
-    form: (get(['Form']) as DrugForm) || 'Other',
-    packageSize: get(['Package Size', 'Size', 'Package']),
+    form: (get(['PACK TYPE', 'Form']) as DrugForm) || 'Other',
+    packageSize: get(['PACK UNIT', 'Package Size', 'Size', 'Package']),
     category: (get(['Category']) as DrugCategory) || 'Other',
     location: (get(['Location', 'Loc']) as Location) || 'Main Pharmacy',
     expirationDate: get(['Expiration Date', 'Exp Date', 'Expiration']),
     lotNumber: get(['Lot Number', 'Lot']),
     controlled: get(['Controlled (Y/N)', 'Controlled']).toUpperCase() === 'Y',
     controlledSchedule: get(['Controlled Schedule', 'Schedule']),
-    unit: get(['Unit', 'UOM']) || 'bottle',
-    quantityOnHand: getNum(['Quantity On Hand', 'Qty', 'Quantity', 'Count', 'On Hand']),
+    unit: get(['COUNT TYPE', 'Unit', 'UOM']) || 'bottle',
+    quantityOnHand: getNum(['COUNT', 'Quantity On Hand', 'Qty', 'Quantity', 'Count', 'On Hand']),
     countedBy: get(['Counted By', 'CountedBy']),
     lastCountedAt: get(['Last Counted', 'LastCounted']) || new Date().toISOString(),
     notes: get(['Notes', 'Note']),

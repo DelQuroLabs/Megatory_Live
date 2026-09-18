@@ -31,8 +31,8 @@ node scripts/validate_records.cjs   # validate artifacts/ against schemas/
 
 ## Template Structure
 
-19 columns, exact order:
-`Item ID | Barcode | Drug Name | Generic Name | Manufacturer | Strength/Concentration | Form | Package Size | Category | Location | Expiration Date | Lot Number | Controlled (Y/N) | Controlled Schedule | Unit | Quantity On Hand (editable) | Counted By | Last Counted | Notes`
+16 columns, exact order:
+`SKU | MANUFACTURER | MANUFACTURER NUMBER | ITEM DESCRIPTION | PACK PRICE | PACK TYPE | PACK UNIT | COUNT TYPE | COUNT (editable) | ITEM PRICE | VALUE ON HAND | LOG 1 | LOG 2 | LOG 3 | LOG 4 | LOG 5`
 
 Export includes second sheet "Instructions" explaining locked vs editable.
 
@@ -114,7 +114,7 @@ The previous records over-claimed. Specifically:
 
 ## Next: Match Your Exact Template
 
-If your protected master has different headers/order, send it and I'll update `TEMPLATE_COLUMNS` to be 1:1.
+The supplied master image is now reflected 1:1 in `TEMPLATE_COLUMNS`; `COUNT` is the editable count field.
 
 ## License
 
