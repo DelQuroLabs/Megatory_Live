@@ -18,12 +18,8 @@
       ]
     },
     {
-      "id": "na-008",
-      "action": "Add accessibility labels to app/add.tsx, app/scan.tsx and app/import-export.tsx (31 unlabelled TouchableOpacity controls remain)"
-    },
-    {
       "id": "na-009",
-      "action": "Triage the 26 npm audit advisories (13 moderate / 12 high / 1 critical) and record the result - required for SEC-001 at production-candidate"
+      "action": "Triage the 27 npm audit advisories (14 moderate / 12 high / 1 critical) and record the result - required for SEC-001 at production-candidate"
     },
     {
       "id": "na-010",
@@ -44,9 +40,9 @@
     },
     {
       "id": "oi-002",
-      "summary": "add.tsx, scan.tsx and import-export.tsx have no accessibility labels",
+      "summary": "Accessibility labels added to add.tsx, scan.tsx and import-export.tsx; automated coverage remains limited to index.tsx",
       "opened_at": "2026-09-18T00:46:00Z",
-      "notes": "Only app/index.tsx was labelled and test-covered this turn. 31 of the 37 TouchableOpacity controls across the four screens are still unlabelled."
+      "notes": "All four primary screens now provide labels for their interactive controls. The inventory screen has automated a11y tests; the other three screens still need rendered component tests."
     },
     {
       "id": "oi-003",
@@ -231,6 +227,26 @@
         "oi-002 a11y labels on add/scan/import-export screens",
         "oi-003 npm audit triage",
         "oi-004 missing spec_lint.py"
+      ]
+    },
+    {
+      "at": "2026-09-18T00:00:00Z",
+      "user_message_brief": "Asked to continue development after supplying the master template image.",
+      "actions_taken": [
+        "Mapped the supplied 16-column master layout in TEMPLATE_COLUMNS and Excel serialization",
+        "Added accessibility labels, roles, and selected-state announcements to add, scan, and import-export screens",
+        "Ran typecheck and the existing Jest suite"
+      ],
+      "outcomes": [
+        "Typecheck clean",
+        "22 tests pass across 4 suites",
+        "All six control records remain schema-valid"
+      ],
+      "new_blockers": [],
+      "unresolved": [
+        "Rendered component tests for add, scan, and import-export screens",
+        "npm audit triage",
+        "native smoke and visual waivers"
       ]
     }
   ],

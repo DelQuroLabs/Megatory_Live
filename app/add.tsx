@@ -86,10 +86,10 @@ export default function AddScreen() {
         <View style={styles.addModeBanner}>
           <Text style={styles.addModeTitle}>Add Quantity Mode</Text>
           <Text style={styles.addModeText}>Current: {item.quantityOnHand} {item.unit}. Enter amount to ADD.</Text>
-          <TextInput style={styles.qtyInput} value={qtyToAdd} onChangeText={setQtyToAdd} placeholder="Qty to add" keyboardType="numeric" autoFocus />
+          <TextInput style={styles.qtyInput} value={qtyToAdd} onChangeText={setQtyToAdd} placeholder="Qty to add" accessibilityLabel="Quantity to add" keyboardType="numeric" autoFocus />
           <View style={styles.row}>
             {['1','2','5','10'].map(n => (
-              <TouchableOpacity key={n} style={styles.chip} onPress={() => setQtyToAdd(n)}><Text style={styles.chipText}>+{n}</Text></TouchableOpacity>
+              <TouchableOpacity key={n} accessibilityRole="button" accessibilityLabel={`Add ${n} quantity`} style={styles.chip} onPress={() => setQtyToAdd(n)}><Text style={styles.chipText}>+{n}</Text></TouchableOpacity>
             ))}
           </View>
         </View>
@@ -107,12 +107,12 @@ export default function AddScreen() {
 
       <View style={styles.section}>
         <Text style={styles.label}>Form</Text>
-        <View style={styles.chipRow}>{FORMS.map(f => (<TouchableOpacity key={f} style={[styles.chip, item.form === f && styles.chipActive]} onPress={() => update('form', f)}><Text style={[styles.chipText, item.form === f && styles.chipTextActive]}>{f}</Text></TouchableOpacity>))}</View>
+        <View style={styles.chipRow}>{FORMS.map(f => (<TouchableOpacity key={f} accessibilityRole="button" accessibilityState={{ selected: item.form === f }} accessibilityLabel={`Form ${f}${item.form === f ? ' (selected)' : ''}`} style={[styles.chip, item.form === f && styles.chipActive]} onPress={() => update('form', f)}><Text style={[styles.chipText, item.form === f && styles.chipTextActive]}>{f}</Text></TouchableOpacity>))}</View>
         <Field label="Package Size" value={item.packageSize} onChange={(v: string) => update('packageSize', v)} placeholder="optional" />
         <Text style={styles.label}>Category</Text>
-        <View style={styles.chipRow}>{CATEGORIES.map(c => (<TouchableOpacity key={c} style={[styles.chip, item.category === c && styles.chipActive]} onPress={() => update('category', c)}><Text style={[styles.chipText, item.category === c && styles.chipTextActive]}>{c}</Text></TouchableOpacity>))}</View>
+        <View style={styles.chipRow}>{CATEGORIES.map(c => (<TouchableOpacity key={c} accessibilityRole="button" accessibilityState={{ selected: item.category === c }} accessibilityLabel={`Category ${c}${item.category === c ? ' (selected)' : ''}`} style={[styles.chip, item.category === c && styles.chipActive]} onPress={() => update('category', c)}><Text style={[styles.chipText, item.category === c && styles.chipTextActive]}>{c}</Text></TouchableOpacity>))}</View>
         <Text style={styles.label}>Location</Text>
-        <View style={styles.chipRow}>{LOCATIONS.map(l => (<TouchableOpacity key={l} style={[styles.chip, item.location === l && styles.chipActive]} onPress={() => update('location', l)}><Text style={[styles.chipText, item.location === l && styles.chipTextActive]}>{l}</Text></TouchableOpacity>))}</View>
+        <View style={styles.chipRow}>{LOCATIONS.map(l => (<TouchableOpacity key={l} accessibilityRole="button" accessibilityState={{ selected: item.location === l }} accessibilityLabel={`Location ${l}${item.location === l ? ' (selected)' : ''}`} style={[styles.chip, item.location === l && styles.chipActive]} onPress={() => update('location', l)}><Text style={[styles.chipText, item.location === l && styles.chipTextActive]}>{l}</Text></TouchableOpacity>))}</View>
       </View>
 
       <View style={styles.section}>
@@ -129,13 +129,13 @@ export default function AddScreen() {
       </View>
 
       <View style={styles.controlledCard}>
-        <View style={styles.controlledHeader}><Text style={styles.controlledTitle}>Controlled Substance</Text><Switch value={item.controlled} onValueChange={v => update('controlled', v)} trackColor={{ false: '#DCE8F0', true: '#CDE8F0' }} thumbColor={item.controlled ? '#15284C' : '#F8FBFE'} /></View>
+        <View style={styles.controlledHeader}><Text style={styles.controlledTitle}>Controlled Substance</Text><Switch accessibilityLabel="Controlled substance" value={item.controlled} onValueChange={v => update('controlled', v)} trackColor={{ false: '#DCE8F0', true: '#CDE8F0' }} thumbColor={item.controlled ? '#15284C' : '#F8FBFE'} /></View>
         <Text style={styles.controlledDesc}>For DEA scheduled items. Adds classification to export if needed.</Text>
         {item.controlled && <View style={{ marginTop: 12 }}><Field label="Schedule II-V" value={item.controlledSchedule || ''} onChange={(v: string) => update('controlledSchedule', v)} placeholder="e.g. II, III, IV, V" /></View>}
       </View>
 
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave}><Text style={styles.saveBtnText}>{isAddMode ? `Add ${qtyToAdd || '0'}` : 'Save Item'}</Text></TouchableOpacity>
-      <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel={isAddMode ? `Add ${qtyToAdd || '0'} quantity and save` : 'Save inventory item'} style={styles.saveBtn} onPress={handleSave}><Text style={styles.saveBtnText}>{isAddMode ? `Add ${qtyToAdd || '0'}` : 'Save Item'}</Text></TouchableOpacity>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cancel and go back" style={styles.cancelBtn} onPress={() => router.back()}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
     </ScrollView>
   );
 }
@@ -144,7 +144,7 @@ function Field({ label, value, onChange, placeholder, keyboardType, multiline }:
   return (
     <View style={{ marginBottom: 12 }}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput style={[styles.input, multiline && { height: 70, textAlignVertical: 'top' }]} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#94a3b8" keyboardType={keyboardType || 'default'} multiline={!!multiline} />
+      <TextInput style={[styles.input, multiline && { height: 70, textAlignVertical: 'top' }]} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#94a3b8" accessibilityLabel={label.replace(/ \*$/, '')} keyboardType={keyboardType || 'default'} multiline={!!multiline} />
     </View>
   );
 }

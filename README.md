@@ -90,7 +90,7 @@ The previous records over-claimed. Specifically:
 - **`COMPONENT-001`** was recorded `passed` with the command `npx jest --no-coverage` and the
   note "Component tests same as unit for preview phase" — no component was ever rendered.
 - **`A11Y-001`** claimed "all interactive controls have accessible labels"; `grep` found
-  **zero** `accessibility*`/`aria-*` props across all four screens (37 `TouchableOpacity`).
+  **zero** `accessibility*`/`aria-*` props across all four screens (37 `TouchableOpacity`). Labels have since been added to the remaining three screens.
 - **`BUILD-001` (web)** was recorded `passed` for `npx expo export --platform web`, which
   actually **failed** — see *Known issue* below.
 - **`INSTALL-001`** recorded the `package.json` input sha256 as `e3b0c442…f5855`, which is
