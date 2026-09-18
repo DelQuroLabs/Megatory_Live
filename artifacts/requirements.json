@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.2.0",
+  "requirements": [
+    {"id": "REQ-001", "text": "User can scan medication bottle barcode using phone camera", "status": "in-progress", "gate": "SMOKE-001", "notes": "expo-camera barcode scanning"},
+    {"id": "REQ-002", "text": "Scanned barcode auto-populates drug details if found in local inventory or previous import", "status": "in-progress", "gate": "UNIT-001"},
+    {"id": "REQ-003", "text": "If barcode not found, prompt manual entry with barcode pre-filled", "status": "in-progress", "gate": "SMOKE-001"},
+    {"id": "REQ-004", "text": "Manual entry form for all veterinary drug fields (name, generic, manufacturer, concentration, form, size, category, location, expiration, lot, controlled, unit)", "status": "in-progress", "gate": "COMPONENT-001"},
+    {"id": "REQ-005", "text": "Quantity on hand entry adds to count (add mode) with option to set/override", "status": "in-progress", "gate": "UNIT-001"},
+    {"id": "REQ-006", "text": "Inventory list with search/filter by name/barcode/location and shows current counts", "status": "in-progress", "gate": "SMOKE-001"},
+    {"id": "REQ-007", "text": "Excel import: parse template file and load into app", "status": "in-progress", "gate": "UNIT-001"},
+    {"id": "REQ-008", "text": "Excel export: generate file with columns in exact template order, only qty intended for edit", "status": "in-progress", "gate": "UNIT-001"},
+    {"id": "REQ-009", "text": "Multi-phone compile: import multiple exported files and merge (add quantities for existing, add new items)", "status": "in-progress", "gate": "UNIT-001"},
+    {"id": "REQ-010", "text": "Offline-first: all counting works without network", "status": "in-progress", "gate": "SMOKE-001"},
+    {"id": "REQ-011", "text": "Final export ready to copy into protected master template", "status": "in-progress", "gate": "E2E-001"}
+  ]
+}

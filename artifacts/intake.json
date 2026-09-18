@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.2.0",
+  "core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into locked template format, allow quantity-on-hand entry that adds to count, support manual entry for unscannable items, and compile multi-phone counts via Excel import/export for final inventory",
+  "platforms": ["ios", "android", "web-companion"],
+  "connectivity": "offline-first",
+  "data_identity": "local-only",
+  "publishing_intent": "local-preview",
+  "cost_ceiling": "$0/month",
+  "resolved_at": "2026-09-17T21:30:00Z"
+}

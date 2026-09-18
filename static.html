@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetCount - Inventory with Scanner</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f0fdfa;color:#111827}
+header{background:#0f766e;color:white;padding:16px}
+header h1{font-size:20px}
+header p{font-size:12px;opacity:0.9;margin-top:4px}
+.container{max-width:900px;margin:0 auto;padding:16px}
+.card{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:12px}
+.card h2{font-size:16px;color:#0f766e;margin-bottom:8px}
+.row{display:flex;flex-wrap:wrap}
+.row .col{flex:1;min-width:200px;margin-right:8px;margin-bottom:8px}
+label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
+button{background:#0f766e;color:white;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;margin-right:8px;margin-bottom:8px}
+button.secondary{background:white;color:#0f766e;border:1px solid #0f766e}
+button.tertiary{background:#4338ca}
+button.danger{background:#dc2626}
+.badge{background:#0f766e;color:white;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:700}
+.list-item{border-bottom:1px solid #f3f4f6;padding:10px 0}
+.list-item:last-child{border:none}
+.small{font-size:12px;color:#6b7280}
+.search{width:100%;padding:12px;background:#f3f4f6;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:12px}
+.chip{display:inline-block;padding:6px 12px;border-radius:20px;background:#f3f4f6;border:1px solid #e5e7eb;font-size:12px;margin-right:6px;margin-bottom:6px;cursor:pointer}
+.chip.active{background:#0f766e;color:white;border-color:#0f766e}
+.status{background:#111827;color:#f3f4f6;padding:10px;border-radius:8px;font-family:monospace;font-size:12px;margin-top:12px;white-space:pre-wrap}
+#scanner{width:100%;max-width:400px;border-radius:12px;background:black;aspect-ratio:4/3;display:none;margin:12px 0}
+#scanner.active{display:block}
+.scan-overlay{position:relative}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:50%;border:3px solid #2dd4bf;border-radius:12px;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+<h1>VetCount — Vet Inventory + Scanner</h1>
+<p>Native Expo app has full camera scan (expo-camera). Web fallback uses Browser BarcodeDetector + manual entry. Qty ADDS to count. Excel import/export/merge.</p>
+</header>
+<div class="container">
+<div class="card">
+<h2>Device</h2>
+<div class="row"><div class="col"><label>Device Name</label><input id="deviceName" value="Phone-Web" placeholder="e.g. Pharmacy-iPad"></div></div>
+<button onclick="saveDevice()">Save Device Name</button>
+<span id="deviceStatus" class="small"></span>
+</div>
+
+<div class="card">
+<h2>📷 Scan Bottle</h2>
+<p class="small">Scanning function is back! On native mobile app: uses expo-camera with full barcode types (EAN, UPC, Code128, QR). On web: uses browser BarcodeDetector API if available, otherwise manual entry.</p>
+<div>
+<button onclick="startScanner()">📷 Start Camera Scan</button>
+<button class="secondary" onclick="stopScanner()">Stop Camera</button>
+<button class="tertiary" onclick="simulateScan()">Simulate Scan (test)</button>
+</div>
+<div class="scan-overlay">
+<video id="scanner" autoplay playsinline muted></video>
+<div id="scanFrame" class="scan-frame" style="display:none"></div>
+</div>
+<div id="scanStatus" class="status" style="display:none"></div>
+<div class="small" style="margin-top:8px">
+<strong>Scan tips:</strong> NDC barcodes scan best in good light. If not found, you'll create manually. Qty adds to count.<br>
+<strong>Native app location:</strong> <code>app/scan.tsx</code> — uses <code>CameraView</code> from <code>expo-camera</code> with <code>barcodeTypes: ['ean13','ean8','upc_a','upc_e','code128','code39','qr']</code> and lookup in local inventory.
+</div>
+</div>
+
+<div class="card">
+<h2>Add / Edit Item (Manual fallback for things scanner can't find)</h2>
+<div class="row">
+<div class="col"><label>Barcode / NDC (from scan)</label><input id="barcode" placeholder="e.g. 003100123456"></div>
+<div class="col"><label>Drug Name *</label><input id="drugName" placeholder="Carprofen"></div>
+</div>
+<div class="row">
+<div class="col"><label>Generic Name</label><input id="genericName" placeholder="Carprofen"></div>
+<div class="col"><label>Manufacturer</label><input id="manufacturer" placeholder="Putney"></div>
+</div>
+<div class="row">
+<div class="col"><label>Strength</label><input id="concentration" placeholder="100mg"></div>
+<div class="col"><label>Form</label><select id="form"><option>Tablet</option><option>Capsule</option><option>Chewable</option><option>Liquid</option><option>Injectable</option><option>Ointment</option><option>Solution</option><option>Other</option></select></div>
+</div>
+<div class="row">
+<div class="col"><label>Package Size</label><input id="packageSize" placeholder="60ct"></div>
+<div class="col"><label>Category</label><select id="category"><option>NSAID</option><option>Antibiotic</option><option>Analgesic</option><option>Sedative/Anesthesia</option><option>Antiparasitic</option><option>Vaccine</option><option>Controlled Substance</option><option>Supplement</option><option>Other</option></select></div>
+</div>
+<div class="row">
+<div class="col"><label>Location</label><select id="location"><option>Main Pharmacy</option><option>Surgery</option><option>Exam 1</option><option>Exam 2</option><option>Refrigerator</option><option>Controlled Cabinet</option><option>Warehouse</option><option>Other</option></select></div>
+<div class="col"><label>Expiration</label><input id="expiration" placeholder="YYYY-MM-DD"></div>
+</div>
+<div class="row">
+<div class="col"><label>Unit</label><input id="unit" value="bottle" placeholder="bottle, vial, tablet"></div>
+<div class="col"><label>Quantity to ADD *</label><input id="qty" type="number" value="1" placeholder="Qty to add"></div>
+</div>
+<div class="row">
+<div class="col"><label>Counted By</label><input id="countedBy" placeholder="auto from device"></div>
+<div class="col"><label>Notes</label><input id="notes" placeholder="optional"></div>
+</div>
+<div>
+<label>Controlled?</label>
+<input type="checkbox" id="controlled"> Yes <input id="schedule" placeholder="II-V" style="width:80px;margin-left:10px">
+</div>
+<br>
+<button onclick="addItem()">+ Add Quantity (Adds to Count)</button>
+<button class="secondary" onclick="clearForm()">Clear</button>
+<div id="formStatus" class="status" style="display:none"></div>
+</div>
+
+<div class="card">
+<h2>Inventory List (<span id="count">0</span> items)</h2>
+<input id="search" class="search" placeholder="Search drug, barcode, manufacturer..." oninput="render()">
+<div id="locationFilters"></div>
+<div id="list"></div>
+</div>
+
+<div class="card">
+<h2>Import / Export / Merge (Multi-Phone Compile)</h2>
+<p class="small">Export = Excel matching locked template (only Qty editable in master). Import = load template or another phone's export. Merge strategy Add sums quantities.</p>
+<div style="margin:12px 0">
+<label>Merge Strategy</label>
+<span class="chip active" id="chipAdd" onclick="setStrategy('add')">Add quantities (recommended)</span>
+<span class="chip" id="chipReplace" onclick="setStrategy('replace')">Replace quantities</span>
+</div>
+<button onclick="exportExcel()">📤 Export to Excel (CSV)</button>
+<button class="secondary" onclick="document.getElementById('fileInput').click()">📥 Import Excel/CSV</button>
+<input type="file" id="fileInput" style="display:none" accept=".xlsx,.xls,.csv" onchange="importFile(event)">
+<button class="tertiary" onclick="downloadTemplate()">📄 Download Template</button>
+<button class="danger" onclick="clearAll()">🗑️ Clear Local</button>
+<div id="importStatus" class="status">Ready — Add items then export. To test multi-phone: export from one browser, import in another, quantities will add.</div>
+<div class="card" style="background:#e0f2fe;border-color:#7dd3fc;margin-top:12px">
+<strong>Multi-phone compile:</strong><br>
+1. Each person counts area on phone (scan + manual)<br>
+2. Each phone Export<br>
+3. Collect files<br>
+4. Master phone Import each with Add → quantities summed<br>
+5. Final Export → copy Qty into protected master
+</div>
+</div>
+
+<div class="card">
+<h2>Where is scanning in native app?</h2>
+<p class="small">Full scanning lives in <code>app/scan.tsx</code>:</p>
+<pre style="font-size:11px;background:#f9fafb;padding:8px;border-radius:6px;overflow:auto">import { CameraView } from 'expo-camera'
+&lt;CameraView
+  barcodeScannerSettings={{
+    barcodeTypes: ['ean13','ean8','upc_a','upc_e','code128','code39','qr']
+  }}
+  onBarcodeScanned={handleBarcode}
+/>
+// handleBarcode: lookup local inventory by barcode
+// if found → prompt Add Quantity (adds to count)
+// if not found → navigate to /add?barcode=...
+</pre>
+<p class="small" style="margin-top:8px">Expo Go app: <code>npx expo start --clear</code> → scan QR → camera permission → scan bottles. Works offline, no network needed. Manual entry fallback for things it can't find (compounded, no barcode).</p>
+</div>
+
+<div class="card">
+<h2>Template Columns (Locked Concept)</h2>
+<code style="font-size:11px;display:block;background:#f9fafb;padding:8px;border-radius:6px;margin-top:8px;white-space:pre-wrap">A Item ID | B Barcode | C Drug Name | D Generic | E Manufacturer | F Strength | G Form | H Package Size | I Category | J Location | K Expiration | L Lot | M Controlled Y/N | N Schedule | O Unit | P Quantity On Hand (EDITABLE) | Q Counted By | R Last Counted | S Notes</code>
+</div>
+</div>
+
+<script>
+const TEMPLATE_COLUMNS = ['Item ID','Barcode','Drug Name','Generic Name','Manufacturer','Strength/Concentration','Form','Package Size','Category','Location','Expiration Date','Lot Number','Controlled (Y/N)','Controlled Schedule','Unit','Quantity On Hand','Counted By','Last Counted','Notes'];
+let strategy = 'add';
+let stream=null, detector=null, scanInterval=null;
+
+function genId(){ return Math.random().toString(36).slice(2,9)+Date.now().toString(36); }
+function load(){ try{ return JSON.parse(localStorage.getItem('vetcount_inventory_v1')||'[]'); }catch{ return []; } }
+function save(items){ localStorage.setItem('vetcount_inventory_v1', JSON.stringify(items)); }
+function loadDevice(){ return localStorage.getItem('vetcount_device')||'Phone-Web'; }
+function saveDeviceName(){
+  const v=document.getElementById('deviceName').value||'Phone-Web';
+  localStorage.setItem('vetcount_device', v);
+  document.getElementById('deviceStatus').textContent='Saved: '+v;
+}
+function saveDevice(){ saveDeviceName(); }
+
+async function startScanner(){
+  const video=document.getElementById('scanner');
+  const status=document.getElementById('scanStatus');
+  const frame=document.getElementById('scanFrame');
+  try{
+    status.style.display='block';
+    status.textContent='Requesting camera...';
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject=stream;
+    video.classList.add('active');
+    frame.style.display='block';
+    status.textContent='Camera started. Point at barcode. On native app, expo-camera auto-detects. Web: trying BarcodeDetector...';
+    if('BarcodeDetector' in window){
+      const formats=await BarcodeDetector.getSupportedFormats();
+      status.textContent+='\nSupported formats: '+formats.join(', ');
+      detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code']});
+      scanInterval=setInterval(async()=>{
+        try{
+          const barcodes=await detector.detect(video);
+          if(barcodes.length>0){
+            const code=barcodes[0].rawValue;
+            handleScan(code);
+          }
+        }catch(e){ console.log(e); }
+      },500);
+    } else {
+      status.textContent+='\nBarcodeDetector not supported in this browser. Use manual entry or simulate scan. Native app has full scanner. For web, you can still type barcode or use Simulate Scan button.';
+    }
+  }catch(e){
+    status.style.display='block';
+    status.textContent='Camera failed: '+e.message+'\nOn iOS, need HTTPS and permission. Native Expo app handles this automatically with expo-camera permission.';
+  }
+}
+function stopScanner(){
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  if(scanInterval){ clearInterval(scanInterval); scanInterval=null; }
+  const video=document.getElementById('scanner');
+  video.classList.remove('active');
+  video.srcObject=null;
+  document.getElementById('scanFrame').style.display='none';
+  document.getElementById('scanStatus').textContent='Scanner stopped';
+}
+function handleScan(code){
+  const status=document.getElementById('scanStatus');
+  status.style.display='block';
+  status.textContent='Scanned: '+code;
+  document.getElementById('barcode').value=code;
+  // lookup
+  const items=load();
+  const existing=items.find(i=>i.barcode===code);
+  if(existing){
+    status.textContent+='\nFound in inventory: '+existing.drugName+' — current qty '+existing.quantityOnHand+' '+existing.unit+'\nSet qty to add and click Add Quantity (it will ADD)';
+    document.getElementById('drugName').value=existing.drugName;
+    document.getElementById('qty').focus();
+  } else {
+    status.textContent+='\nNot found — create new item with this barcode. Fill details and Add.';
+    document.getElementById('drugName').focus();
+  }
+  // vibrate if supported
+  if(navigator.vibrate) navigator.vibrate(100);
+}
+function simulateScan(){
+  const samples=['003100123456','001234567890','123456789012'];
+  const code=samples[Math.floor(Math.random()*samples.length)];
+  handleScan(code);
+}
+
+function addItem(){
+  const barcode=document.getElementById('barcode').value.trim();
+  const drugName=document.getElementById('drugName').value.trim();
+  if(!drugName){ alert('Drug Name required'); return; }
+  const qty=parseInt(document.getElementById('qty').value)||0;
+  const device=loadDevice();
+  const countedBy=document.getElementById('countedBy').value.trim()||device;
+  const items=load();
+  let existing=null;
+  if(barcode) existing=items.find(i=>i.barcode===barcode);
+  if(existing){
+    existing.quantityOnHand=(existing.quantityOnHand||0)+qty;
+    existing.lastCountedAt=new Date().toISOString();
+    existing.countedBy=countedBy;
+    document.getElementById('formStatus').style.display='block';
+    document.getElementById('formStatus').textContent=`Updated ${existing.drugName}: +${qty} => ${existing.quantityOnHand} ${existing.unit}`;
+  } else {
+    const newItem={
+      id:genId(),
+      barcode,
+      drugName,
+      genericName:document.getElementById('genericName').value.trim(),
+      manufacturer:document.getElementById('manufacturer').value.trim(),
+      concentration:document.getElementById('concentration').value.trim(),
+      form:document.getElementById('form').value,
+      packageSize:document.getElementById('packageSize').value.trim(),
+      category:document.getElementById('category').value,
+      location:document.getElementById('location').value,
+      expirationDate:document.getElementById('expiration').value.trim(),
+      lotNumber:'',
+      controlled:document.getElementById('controlled').checked,
+      controlledSchedule:document.getElementById('schedule').value.trim(),
+      unit:document.getElementById('unit').value.trim()||'bottle',
+      quantityOnHand:qty,
+      countedBy,
+      lastCountedAt:new Date().toISOString(),
+      notes:document.getElementById('notes').value.trim()
+    };
+    items.push(newItem);
+    document.getElementById('formStatus').style.display='block';
+    document.getElementById('formStatus').textContent=`Added new ${newItem.drugName}: ${qty} ${newItem.unit}`;
+  }
+  save(items);
+  render();
+  document.getElementById('drugName').value='';
+  document.getElementById('barcode').value='';
+}
+function clearForm(){
+  ['barcode','drugName','genericName','manufacturer','concentration','packageSize','expiration','unit','qty','countedBy','notes','schedule'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=id==='qty'?'1':id==='unit'?'bottle':''; });
+  document.getElementById('controlled').checked=false;
+  document.getElementById('formStatus').style.display='none';
+}
+function render(){
+  const items=load();
+  const search=(document.getElementById('search').value||'').toLowerCase();
+  const filtered=items.filter(i=>{
+    if(!search) return true;
+    return (i.drugName||'').toLowerCase().includes(search) || (i.barcode||'').includes(search) || (i.genericName||'').toLowerCase().includes(search) || (i.manufacturer||'').toLowerCase().includes(search);
+  });
+  document.getElementById('count').textContent=filtered.length;
+  const locs=['All', ...Array.from(new Set(items.map(i=>i.location)))];
+  const lf=document.getElementById('locationFilters');
+  lf.innerHTML=locs.map(l=>`<span class="chip" onclick="filterLoc('${l}')">${l}</span>`).join('');
+  const list=document.getElementById('list');
+  if(filtered.length===0){ list.innerHTML='<p class="small">No inventory yet. Add items above.</p>'; return; }
+  list.innerHTML=filtered.map(i=>`
+    <div class="list-item">
+      <div style="display:flex;justify-content:space-between"><strong>${i.drugName||'Unnamed'}</strong><span class="badge">${i.quantityOnHand} ${i.unit}</span></div>
+      <div class="small">${i.genericName||''} ${i.concentration?'• '+i.concentration:''} • ${i.manufacturer||''}</div>
+      <div class="small">📦 ${i.barcode||'No barcode'} • ${i.location} • ${i.form} • ${i.packageSize||''} ${i.controlled?'• 🔒 '+ (i.controlledSchedule||'Controlled'):''}</div>
+      <div style="margin-top:6px">
+        <button style="padding:6px 10px;font-size:12px" onclick="quickAdd('${i.id}',1)">+1</button>
+        <button style="padding:6px 10px;font-size:12px" class="secondary" onclick="quickAdd('${i.id}',5)">+5</button>
+        <button style="padding:6px 10px;font-size:12px" class="secondary" onclick="editItem('${i.id}')">Edit</button>
+        <button style="padding:6px 10px;font-size:12px" class="danger" onclick="deleteItem('${i.id}')">Delete</button>
+        <span class="small" style="margin-left:8px">${i.countedBy||''} • ${new Date(i.lastCountedAt).toLocaleString()}</span>
+      </div>
+    </div>
+  `).join('');
+}
+function quickAdd(id, amt){
+  const items=load();
+  const it=items.find(i=>i.id===id);
+  if(!it) return;
+  it.quantityOnHand=(it.quantityOnHand||0)+amt;
+  it.lastCountedAt=new Date().toISOString();
+  save(items); render();
+}
+function deleteItem(id){
+  if(!confirm('Delete this item from this device?')) return;
+  let items=load(); items=items.filter(i=>i.id!==id); save(items); render();
+}
+function editItem(id){
+  const items=load(); const it=items.find(i=>i.id===id); if(!it) return;
+  document.getElementById('barcode').value=it.barcode||'';
+  document.getElementById('drugName').value=it.drugName||'';
+  document.getElementById('genericName').value=it.genericName||'';
+  document.getElementById('manufacturer').value=it.manufacturer||'';
+  document.getElementById('concentration').value=it.concentration||'';
+  document.getElementById('form').value=it.form||'Tablet';
+  document.getElementById('packageSize').value=it.packageSize||'';
+  document.getElementById('category').value=it.category||'Other';
+  document.getElementById('location').value=it.location||'Main Pharmacy';
+  document.getElementById('expiration').value=it.expirationDate||'';
+  document.getElementById('unit').value=it.unit||'bottle';
+  document.getElementById('countedBy').value=it.countedBy||'';
+  document.getElementById('notes').value=it.notes||'';
+  document.getElementById('controlled').checked=!!it.controlled;
+  document.getElementById('schedule').value=it.controlledSchedule||'';
+  document.getElementById('qty').value='0';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function filterLoc(l){
+  if(l==='All'){ document.getElementById('search').value=''; } else { document.getElementById('search').value=l; }
+  render();
+}
+function setStrategy(s){
+  strategy=s;
+  document.getElementById('chipAdd').className=s==='add'?'chip active':'chip';
+  document.getElementById('chipReplace').className=s==='replace'?'chip active':'chip';
+}
+function toRow(item){
+  return {
+    'Item ID':item.id,
+    'Barcode':item.barcode,
+    'Drug Name':item.drugName,
+    'Generic Name':item.genericName,
+    'Manufacturer':item.manufacturer,
+    'Strength/Concentration':item.concentration,
+    'Form':item.form,
+    'Package Size':item.packageSize,
+    'Category':item.category,
+    'Location':item.location,
+    'Expiration Date':item.expirationDate,
+    'Lot Number':item.lotNumber,
+    'Controlled (Y/N)':item.controlled?'Y':'N',
+    'Controlled Schedule':item.controlledSchedule||'',
+    'Unit':item.unit,
+    'Quantity On Hand':item.quantityOnHand,
+    'Counted By':item.countedBy,
+    'Last Counted':item.lastCountedAt,
+    'Notes':item.notes
+  };
+}
+function exportExcel(){
+  const items=load();
+  if(items.length===0){ alert('No items to export'); return; }
+  const rows=items.map(toRow);
+  const header=TEMPLATE_COLUMNS.join(',');
+  const csvRows=rows.map(r=>TEMPLATE_COLUMNS.map(c=>{
+    let v=r[c]; if(v==null) v=''; v=String(v).replace(/"/g,'""'); if(v.includes(',')||v.includes('"')||v.includes('\n')) v=`"${v}"`; return v;
+  }).join(','));
+  const csv=[header, ...csvRows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`vet-inventory-${loadDevice()}-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+  document.getElementById('importStatus').textContent=`Exported ${items.length} items as CSV (Excel compatible). Native app exports .xlsx with Instructions sheet.`;
+}
+function downloadTemplate(){
+  const header=TEMPLATE_COLUMNS.join(',');
+  const example='a1,003100123456,Carprofen,Carprofen,Putney,100mg,Tablet,60ct,NSAID,Main Pharmacy,2026-12-31,LOT123,N,,tablet,42,Sarah-Pharmacy,'+new Date().toISOString()+',';
+  const csv=header+'\n'+example;
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='vet-inventory-TEMPLATE.csv'; a.click(); URL.revokeObjectURL(url);
+}
+function importFile(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const text=ev.target.result;
+      const lines=text.split('\n').filter(l=>l.trim());
+      if(lines.length<2){ alert('No data'); return; }
+      const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+      const idxMap={};
+      TEMPLATE_COLUMNS.forEach(col=>{
+        const i=headers.findIndex(h=>h.toLowerCase()===col.toLowerCase() || h.toLowerCase().includes(col.toLowerCase().split(' ')[0]));
+        if(i>=0) idxMap[col]=i;
+      });
+      if(Object.keys(idxMap).length<5){
+        TEMPLATE_COLUMNS.forEach((col,i)=>idxMap[col]=i);
+      }
+      function parseCSVLine(line){
+        const res=[]; let cur=''; let inQ=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch==='"'){
+            if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; }
+          } else if(ch===',' && !inQ){ res.push(cur); cur=''; } else { cur+=ch; }
+        }
+        res.push(cur); return res;
+      }
+      const parsed=[];
+      for(let r=1;r<lines.length;r++){
+        const cols=parseCSVLine(lines[r]);
+        if(cols.length===0) continue;
+        const get=(col)=>{
+          const i=idxMap[col]; if(i==null||i>=cols.length) return ''; return (cols[i]||'').replace(/^"|"$/g,'').trim();
+        };
+        parsed.push({
+          id:get('Item ID')||genId(),
+          barcode:get('Barcode'),
+          drugName:get('Drug Name'),
+          genericName:get('Generic Name'),
+          manufacturer:get('Manufacturer'),
+          concentration:get('Strength/Concentration'),
+          form:get('Form')||'Other',
+          packageSize:get('Package Size'),
+          category:get('Category')||'Other',
+          location:get('Location')||'Main Pharmacy',
+          expirationDate:get('Expiration Date'),
+          lotNumber:get('Lot Number'),
+          controlled:(get('Controlled (Y/N)')||'').toUpperCase()==='Y',
+          controlledSchedule:get('Controlled Schedule'),
+          unit:get('Unit')||'bottle',
+          quantityOnHand:parseInt(get('Quantity On Hand'))||0,
+          countedBy:get('Counted By')||loadDevice(),
+          lastCountedAt:get('Last Counted')||new Date().toISOString(),
+          notes:get('Notes')
+        });
+      }
+      const existing=load();
+      const map=new Map();
+      existing.forEach(it=>{ const key=it.barcode?`bc:${it.barcode}`:`id:${it.id}`; map.set(key,it); });
+      let added=0, updated=0;
+      parsed.forEach(inItem=>{
+        const key=inItem.barcode?`bc:${inItem.barcode}`:`id:${inItem.id}`;
+        const ex=map.get(key);
+        if(ex){
+          if(strategy==='add'){ ex.quantityOnHand=(ex.quantityOnHand||0)+(inItem.quantityOnHand||0); } else { ex.quantityOnHand=inItem.quantityOnHand; }
+          ex.lastCountedAt=new Date().toISOString();
+          updated++;
+        } else { map.set(key,inItem); added++; }
+      });
+      const merged=Array.from(map.values());
+      save(merged);
+      document.getElementById('importStatus').textContent=`Imported ${parsed.length} rows: ${added} new, ${updated} merged (strategy ${strategy})`;
+      render();
+    }catch(err){ alert('Import failed: '+err.message); console.error(err); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+function clearAll(){ if(!confirm('Clear all local inventory on this device? Export first!')) return; localStorage.removeItem('vetcount_inventory_v1'); render(); document.getElementById('importStatus').textContent='Cleared'; }
+
+document.getElementById('deviceName').value=loadDevice();
+render();
+</script>
+</body>
+</html>

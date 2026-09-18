@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VetCount — Bubbly Inventory</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f6f7fb;color:#1e293b;padding-bottom:110px;overscroll-behavior:none}
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:18px 20px 14px;border-bottom:1px solid rgba(0,0,0,0.06)}
+.header-top{display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,#0f766e 0%,#14b8a6 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;box-shadow:0 6px 16px rgba(15,118,110,0.3)}
+.logo h1{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.logo p{font-size:11px;color:#64748b;font-weight:700;margin-top:-2px;letter-spacing:0.3px}
+.device-pill{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;color:#475569;display:flex;align-items:center;gap:6px}
+.container{max-width:480px;margin:0 auto;padding:16px}
+.card{background:white;border-radius:28px;padding:18px 18px 18px;box-shadow:0 8px 30px rgba(0,0,0,0.06),0 1px 3px rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.04);margin-bottom:16px}
+.card h2{font-size:18px;font-weight:800;letter-spacing:-0.3px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card .subtitle{font-size:13px;color:#64748b;font-weight:600;margin-bottom:14px;line-height:1.4}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.col{flex:1;min-width:140px;margin-bottom:10px}
+label{font-size:11px;font-weight:800;color:#475569;display:block;margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase}
+input,select,textarea{width:100%;padding:14px 14px;border:1.5px solid #e2e8f0;border-radius:16px;font-size:15px;font-weight:600;background:#f8fafc;transition:all 0.2s;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:#14b8a6;background:white;box-shadow:0 0 0 4px rgba(20,184,166,0.15)}
+button{border:none;padding:14px 18px;border-radius:16px;font-weight:800;font-size:14px;cursor:pointer;transition:transform 0.1s,box-shadow 0.2s;letter-spacing:-0.2px;box-shadow:0 4px 14px rgba(0,0,0,0.08);font-family:inherit}
+button:active{transform:scale(0.96)}
+button.primary{background:linear-gradient(135deg,#0f766e,#14b8a6);color:white;box-shadow:0 6px 20px rgba(15,118,110,0.3)}
+button.secondary{background:white;color:#0f766e;border:1.5px solid #ccfbf1;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+button.tertiary{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
+button.ghost{background:#f8fafc;color:#64748b;box-shadow:none;border:1px dashed #e2e8f0}
+button.danger{background:#fff1f2;color:#e11d48;border:1px solid #ffe4e6;box-shadow:none}
+button.small{padding:10px 14px;font-size:12px;border-radius:12px}
+.badge{background:linear-gradient(135deg,#0f766e,#14b8a6);color:white;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(15,118,110,0.25)}
+.bubble-list{display:flex;flex-direction:column;gap:12px}
+.bubble-item{background:white;border-radius:22px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:8px}
+.bubble-item-top{display:flex;justify-content:space-between;align-items:center}
+.bubble-name{font-weight:800;font-size:16px;letter-spacing:-0.3px}
+.bubble-meta{font-size:12px;color:#64748b;font-weight:600}
+.bubble-actions{display:flex;gap:8px;margin-top:4px}
+.search-wrap{position:relative;margin-bottom:14px}
+.search{width:100%;padding:14px 16px 14px 44px;background:#f1f5f9;border-radius:999px;border:1.5px solid #e2e8f0;font-size:15px;font-weight:600;transition:all 0.2s}
+.search:focus{background:white;border-color:#14b8a6;box-shadow:0 0 0 4px rgba(20,184,166,0.15);outline:none}
+.search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;opacity:0.6}
+.chip{display:inline-flex;align-items:center;padding:8px 14px;border-radius:999px;background:#f8fafc;border:1.5px solid #e2e8f0;font-size:12px;font-weight:700;margin-right:8px;margin-bottom:8px;cursor:pointer;transition:all 0.15s}
+.chip.active{background:#0f766e;color:white;border-color:#0f766e;box-shadow:0 4px 12px rgba(15,118,110,0.25)}
+.status{background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:16px;font-family:monospace;font-size:11px;margin-top:12px;white-space:pre-wrap;line-height:1.5}
+#scanner{width:100%;border-radius:24px;background:#0f172a;aspect-ratio:4/3;display:none;margin:12px 0;overflow:hidden}
+#scanner.active{display:block}
+.scan-overlay{position:relative}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:68%;height:52%;border:3px dashed rgba(45,212,191,0.9);border-radius:20px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.25)}
+.pill-bar{display:flex;background:#f1f5f9;border-radius:999px;padding:4px;gap:4px;margin:10px 0}
+.pill-bar button{flex:1;padding:10px;border-radius:999px;box-shadow:none;font-size:12px}
+.pill-bar button.active{background:white;box-shadow:0 2px 10px rgba(0,0,0,0.08);color:#0f766e}
+.empty-state{text-align:center;padding:30px 20px}
+.empty-blob{width:80px;height:80px;border-radius:28px;background:linear-gradient(135deg,#ccfbf1,#a7f3d0);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 14px;box-shadow:inset 0 2px 8px rgba(255,255,255,0.8)}
+.tabs{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:min(440px, calc(100% - 32px));background:rgba(255,255,255,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,0.06);display:flex;justify-content:space-around;padding:8px;border-radius:28px;z-index:100;box-shadow:0 12px 40px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08)}
+.tab{flex:1;text-align:center;padding:8px 4px;cursor:pointer;border-radius:20px;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab.active{background:#0f766e;color:white;box-shadow:0 6px 16px rgba(15,118,110,0.3)}
+.tab .icon{font-size:20px;display:block;line-height:1}
+.tab .label{font-size:10px;font-weight:800;letter-spacing:0.3px;margin-top:2px;text-transform:uppercase}
+.tab:not(.active){color:#64748b}
+.tab-pane{display:none;animation:pop 0.3s ease}
+.tab-pane.active{display:block}
+@keyframes pop{0%{transform:translateY(8px) scale(0.98);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+.soft-card{background:linear-gradient(135deg,#f0fdfa 0%,#ecfeff 100%);border:1px solid #ccfbf1}
+.soft-card-2{background:linear-gradient(135deg,#fefce8 0%,#fef9c3 100%);border:1px solid #fde68a}
+.soft-card-3{background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);border:1px solid #ddd6fe}
+.file-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed #e2e8f0}
+.file-row:last-child{border:none}
+</style>
+</head>
+<body>
+<header>
+<div class="header-top">
+<div class="logo">
+<div class="logo-mark">🩺</div>
+<div><h1>VetCount</h1><p>Inventory • Bubbly Edition</p></div>
+</div>
+<div class="device-pill">📱 <span id="devicePill">Phone-Web</span></div>
+</div>
+</header>
+
+<div class="container">
+<div id="pane-inventory" class="tab-pane active">
+<div class="card soft-card">
+<h2>📋 Your Stock <span id="count" class="badge" style="margin-left:auto">0</span></h2>
+<p class="subtitle">Tap to edit • Swipe ideas coming • Bubbly, fast, offline</p>
+<div class="search-wrap"><span class="search-icon">🔍</span><input id="search" class="search" placeholder="Search meds, barcode, brand..." oninput="render()"></div>
+<div id="locationFilters" style="margin-bottom:8px"></div>
+<div id="list" class="bubble-list"></div>
+</div>
+</div>
+
+<div id="pane-scan" class="tab-pane">
+<div class="card">
+<h2>📷 Scan Bottle</h2>
+<p class="subtitle">Native app = full camera. Web = try BarcodeDetector or simulate ✨</p>
+<div class="row">
+<button class="primary" onclick="startScanner()">Start Camera</button>
+<button class="secondary" onclick="stopScanner()">Stop</button>
+<button class="tertiary" onclick="simulateScan()">✨ Simulate</button>
+</div>
+<div class="scan-overlay">
+<video id="scanner" autoplay playsinline muted></video>
+<div id="scanFrame" class="scan-frame" style="display:none"></div>
+</div>
+<div id="scanStatus" class="status" style="display:none"></div>
+</div>
+<div class="card soft-card-2">
+<h2>💡 How scanning works</h2>
+<p class="subtitle">Point at NDC / UPC. If found, we bump qty. If new, we create with barcode. Qty always ADDS.</p>
+</div>
+</div>
+
+<div id="pane-add" class="tab-pane">
+<div class="card soft-card">
+<h2>📱 Device</h2>
+<p class="subtitle">Who's counting? Shows in exports for multi-phone merge.</p>
+<div class="row"><div class="col"><input id="deviceName" placeholder="e.g. Pharmacy-iPad"></div><div class="col" style="flex:0 0 auto"><button class="secondary small" onclick="saveDevice()">Save</button></div></div>
+<span id="deviceStatus" class="bubble-meta"></span>
+</div>
+
+<div class="card">
+<h2>＋ Add Item</h2>
+<p class="subtitle">Only <b>Drug Name + Quantity</b> required. Everything else optional — we smart-match to your locked template 💫</p>
+<div class="row">
+<div class="col"><label>Drug Name *</label><input id="drugName" placeholder="Carprofen"></div>
+<div class="col"><label>Barcode (optional)</label><input id="barcode" placeholder="helps matching ✨"></div>
+</div>
+<div class="row">
+<div class="col"><label>Generic</label><input id="genericName" placeholder="optional"></div>
+<div class="col"><label>Manufacturer</label><input id="manufacturer" placeholder="optional"></div>
+</div>
+<div class="row">
+<div class="col"><label>Strength</label><input id="concentration" placeholder="e.g. 100mg"></div>
+<div class="col"><label>Form</label><select id="form"><option>Tablet</option><option>Capsule</option><option>Chewable</option><option>Liquid</option><option>Injectable</option><option>Ointment</option><option>Solution</option><option>Other</option></select></div>
+</div>
+<div class="row">
+<div class="col"><label>Package Size</label><input id="packageSize" placeholder="optional"></div>
+<div class="col"><label>Category</label><select id="category"><option>NSAID</option><option>Antibiotic</option><option>Analgesic</option><option>Sedative/Anesthesia</option><option>Antiparasitic</option><option>Vaccine</option><option>Controlled Substance</option><option>Supplement</option><option>Other</option></select></div>
+</div>
+<div class="row">
+<div class="col"><label>Location</label><select id="location"><option>Main Pharmacy</option><option>Surgery</option><option>Exam 1</option><option>Exam 2</option><option>Refrigerator</option><option>Controlled Cabinet</option><option>Warehouse</option><option>Other</option></select></div>
+<div class="col"><label>Expiration</label><input id="expiration" placeholder="YYYY-MM-DD"></div>
+</div>
+<div class="row">
+<div class="col"><label>Unit</label><input id="unit" value="bottle"></div>
+<div class="col"><label>Quantity to ADD *</label><input id="qty" type="number" value="1"></div>
+</div>
+<div class="row">
+<div class="col"><label>Counted By</label><input id="countedBy" placeholder="auto"></div>
+<div class="col"><label>Notes</label><input id="notes" placeholder="optional"></div>
+</div>
+<div style="background:#f8fafc;border:1.5px dashed #e2e8f0;border-radius:20px;padding:14px;margin-top:10px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<strong style="color:#334155;font-size:13px">Controlled Substance</strong>
+<label style="display:flex;align-items:center;margin:0;text-transform:none;letter-spacing:0"><input type="checkbox" id="controlled" style="width:auto;margin-right:8px"> Yes</label>
+</div>
+<div style="margin-top:10px"><label>Schedule II-V</label><input id="schedule" placeholder="II, III, IV, V"></div>
+</div>
+<div class="row" style="margin-top:16px">
+<button class="primary" style="flex:1" onclick="addItem()">💾 Save Bubbly Item</button>
+<button class="ghost small" onclick="clearForm()">Clear</button>
+</div>
+<div id="formStatus" class="status" style="display:none"></div>
+</div>
+</div>
+
+<div id="pane-files" class="tab-pane">
+<div class="card">
+<h2>⇅ Import / Export</h2>
+<p class="subtitle">Smart matching • Multi-phone merges • Bubbly files</p>
+<div class="pill-bar">
+<button id="chipAdd" class="active" onclick="setStrategy('add')">Add quantities</button>
+<button id="chipReplace" onclick="setStrategy('replace')">Replace</button>
+</div>
+<div class="row">
+<button class="primary" style="flex:1" onclick="exportExcel()">Export 📤</button>
+<button class="secondary" style="flex:1" onclick="document.getElementById('fileInput').click()">Import 📥</button>
+</div>
+<input type="file" id="fileInput" style="display:none" accept=".xlsx,.xls,.csv" onchange="importFile(event)">
+<div class="row" style="margin-top:8px">
+<button class="tertiary small" style="flex:1" onclick="downloadTemplate()">Template 📄</button>
+<button class="danger small" style="flex:1" onclick="clearAll()">Clear Inventory</button>
+</div>
+<div id="importStatus" class="status">Ready ✨</div>
+</div>
+
+<div class="card soft-card-3">
+<h2>📁 Files</h2>
+<p class="subtitle">Exports saved here for email, AirDrop, Drive — bubbly file bubbles</p>
+<div id="managedFilesList">Loading...</div>
+<div class="row" style="margin-top:12px">
+<button class="secondary small" onclick="refreshManagedFiles()">Refresh</button>
+<button class="secondary small" onclick="emailLastFile()">Email Last</button>
+<button class="tertiary small" onclick="seedSampleFile()">Add Sample ✨</button>
+</div>
+<div id="fileDemoStatus" class="status" style="display:none"></div>
+</div>
+
+<div class="card">
+<h2>🧬 Template Columns</h2>
+<code style="font-size:10px;display:block;background:#f8fafc;padding:12px;border-radius:16px;margin-top:8px;white-space:pre-wrap;border:1px dashed #e2e8f0;line-height:1.6">A Item ID | B Barcode | C Drug Name | D Generic | E Manufacturer | F Strength | G Form | H Package Size | I Category | J Location | K Expiration | L Lot | M Controlled Y/N | N Schedule | O Unit | P Quantity On Hand | Q Counted By | R Last Counted | S Notes
+
+Matching: barcode → exact name → fuzzy name ✨</code>
+</div>
+</div>
+</div>
+
+<div class="tabs">
+<div class="tab active" onclick="showTab('inventory')"><span class="icon">📋</span><span class="label">Stock</span></div>
+<div class="tab" onclick="showTab('scan')"><span class="icon">📷</span><span class="label">Scan</span></div>
+<div class="tab" onclick="showTab('add')"><span class="icon">＋</span><span class="label">Add</span></div>
+<div class="tab" onclick="showTab('files')"><span class="icon">📁</span><span class="label">Files</span></div>
+</div>
+
+<script>
+const TEMPLATE_COLUMNS = ['Item ID','Barcode','Drug Name','Generic Name','Manufacturer','Strength/Concentration','Form','Package Size','Category','Location','Expiration Date','Lot Number','Controlled (Y/N)','Controlled Schedule','Unit','Quantity On Hand','Counted By','Last Counted','Notes'];
+let strategy = 'add';
+let stream=null, detector=null, scanInterval=null;
+
+function showTab(name){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');
+  document.querySelectorAll('.tab')[['inventory','scan','add','files'].indexOf(name)].classList.add('active');
+  if(name==='inventory') render();
+  if(name==='files') refreshManagedFiles();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function genId(){ return Math.random().toString(36).slice(2,9)+Date.now().toString(36); }
+function normalizeName(n){ return (n||'').toLowerCase().trim().replace(/[^a-z0-9]/g,''); }
+function load(){ try{ return JSON.parse(localStorage.getItem('vetcount_inventory_v1')||'[]'); }catch{ return []; } }
+function save(items){ localStorage.setItem('vetcount_inventory_v1', JSON.stringify(items)); }
+function loadDevice(){ return localStorage.getItem('vetcount_device')||'Phone-Web'; }
+function saveDeviceName(){
+  const v=document.getElementById('deviceName').value||'Phone-Web';
+  localStorage.setItem('vetcount_device', v);
+  document.getElementById('deviceStatus').textContent='Saved: '+v+' ✨';
+  document.getElementById('devicePill').textContent=v;
+}
+function saveDevice(){ saveDeviceName(); }
+
+async function startScanner(){
+  const video=document.getElementById('scanner');
+  const status=document.getElementById('scanStatus');
+  const frame=document.getElementById('scanFrame');
+  try{
+    status.style.display='block';
+    status.textContent='Requesting camera... 📷';
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject=stream;
+    video.classList.add('active');
+    frame.style.display='block';
+    status.textContent='Camera started. Point at barcode 🎯';
+    if('BarcodeDetector' in window){
+      const formats=await BarcodeDetector.getSupportedFormats();
+      status.textContent+='\nSupported: '+formats.join(', ');
+      detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code']});
+      scanInterval=setInterval(async()=>{
+        try{
+          const barcodes=await detector.detect(video);
+          if(barcodes.length>0) handleScan(barcodes[0].rawValue);
+        }catch(e){}
+      },500);
+    } else {
+      status.textContent+='\nBarcodeDetector not supported. Use Simulate Scan ✨ Native app has full scanner.';
+    }
+  }catch(e){
+    status.style.display='block';
+    status.textContent='Camera failed: '+e.message;
+  }
+}
+function stopScanner(){
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  if(scanInterval){ clearInterval(scanInterval); scanInterval=null; }
+  const video=document.getElementById('scanner');
+  video.classList.remove('active');
+  video.srcObject=null;
+  document.getElementById('scanFrame').style.display='none';
+  document.getElementById('scanStatus').textContent='Stopped';
+}
+function handleScan(code){
+  const status=document.getElementById('scanStatus');
+  status.style.display='block';
+  status.textContent='Scanned: '+code+' 🎉';
+  document.getElementById('barcode').value=code;
+  const items=load();
+  const existing=items.find(i=>i.barcode===code);
+  if(existing){
+    status.textContent+='\nFound: '+existing.drugName+' qty '+existing.quantityOnHand+' 💊';
+    document.getElementById('drugName').value=existing.drugName;
+  } else {
+    status.textContent+='\nNot found — create new ✨';
+  }
+  if(navigator.vibrate) navigator.vibrate(100);
+}
+function simulateScan(){
+  const samples=['003100123456','001234567890','123456789012'];
+  handleScan(samples[Math.floor(Math.random()*samples.length)]);
+}
+
+function addItem(){
+  const barcode=document.getElementById('barcode').value.trim();
+  const drugName=document.getElementById('drugName').value.trim();
+  if(!drugName){ alert('Drug Name required'); return; }
+  const qtyInput=document.getElementById('qty').value;
+  if(qtyInput===''){ alert('Quantity required'); return; }
+  const qty=parseInt(qtyInput)||0;
+  const device=loadDevice();
+  const countedBy=document.getElementById('countedBy').value.trim()||device;
+  const items=load();
+  let existing=null;
+  if(barcode) existing=items.find(i=>i.barcode===barcode);
+  if(!existing){
+    const norm=normalizeName(drugName);
+    existing=items.find(i=>normalizeName(i.drugName)===norm);
+  }
+  if(!existing){
+    const norm=normalizeName(drugName);
+    existing=items.find(i=>{
+      const n=normalizeName(i.drugName);
+      return n.includes(norm) || norm.includes(n);
+    });
+  }
+  if(existing){
+    existing.quantityOnHand=(existing.quantityOnHand||0)+qty;
+    existing.lastCountedAt=new Date().toISOString();
+    existing.countedBy=countedBy;
+    if(!existing.barcode && barcode) existing.barcode=barcode;
+    document.getElementById('formStatus').style.display='block';
+    document.getElementById('formStatus').textContent=`Updated ${existing.drugName}: +${qty} => ${existing.quantityOnHand} 🎉`;
+  } else {
+    const newItem={
+      id:genId(),
+      barcode,
+      drugName,
+      genericName:document.getElementById('genericName').value.trim(),
+      manufacturer:document.getElementById('manufacturer').value.trim(),
+      concentration:document.getElementById('concentration').value.trim(),
+      form:document.getElementById('form').value,
+      packageSize:document.getElementById('packageSize').value.trim(),
+      category:document.getElementById('category').value,
+      location:document.getElementById('location').value,
+      expirationDate:document.getElementById('expiration').value.trim(),
+      lotNumber:'',
+      controlled:document.getElementById('controlled').checked,
+      controlledSchedule:document.getElementById('schedule').value.trim(),
+      unit:document.getElementById('unit').value.trim()||'bottle',
+      quantityOnHand:qty,
+      countedBy,
+      lastCountedAt:new Date().toISOString(),
+      notes:document.getElementById('notes').value.trim()
+    };
+    items.push(newItem);
+    document.getElementById('formStatus').style.display='block';
+    document.getElementById('formStatus').textContent=`Added ${newItem.drugName}: ${qty} ✨`;
+  }
+  save(items);
+  render();
+  document.getElementById('drugName').value='';
+  document.getElementById('barcode').value='';
+}
+function clearForm(){
+  ['barcode','drugName','genericName','manufacturer','concentration','packageSize','expiration','unit','qty','countedBy','notes','schedule'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=id==='qty'?'1':id==='unit'?'bottle':''; });
+  document.getElementById('controlled').checked=false;
+  document.getElementById('formStatus').style.display='none';
+}
+function render(){
+  const items=load();
+  const search=(document.getElementById('search').value||'').toLowerCase();
+  const filtered=items.filter(i=>{
+    if(!search) return true;
+    return (i.drugName||'').toLowerCase().includes(search) || (i.barcode||'').includes(search);
+  });
+  document.getElementById('count').textContent=filtered.length;
+  const locs=['All', ...Array.from(new Set(items.map(i=>i.location)))];
+  const lf=document.getElementById('locationFilters');
+  if(lf) lf.innerHTML=locs.map(l=>`<span class="chip" onclick="filterLoc('${l}')">${l}</span>`).join('');
+  const list=document.getElementById('list');
+  if(!list) return;
+  if(filtered.length===0){ list.innerHTML='<div class="empty-state"><div class="empty-blob">📦</div><h3 style="font-weight:800">No stock yet</h3><p class="subtitle">Tap Add to create your first bubbly item ✨</p><button class="primary" onclick="showTab(\'add\')">＋ Add First Item</button></div>'; return; }
+  list.innerHTML=filtered.map(i=>`
+    <div class="bubble-item">
+      <div class="bubble-item-top"><span class="bubble-name">${i.drugName||'Unnamed'}</span><span class="badge">${i.quantityOnHand} ${i.unit}</span></div>
+      <div class="bubble-meta">${i.barcode||'No barcode'} • ${i.location} • ${i.form} ${i.controlled?'• 🔒':''}</div>
+      <div class="bubble-actions">
+        <button class="small primary" onclick="quickAdd('${i.id}',1)">+1</button>
+        <button class="small secondary" onclick="editItem('${i.id}')">Edit</button>
+        <button class="small ghost" onclick="deleteItem('${i.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+function quickAdd(id, amt){
+  const items=load();
+  const it=items.find(i=>i.id===id);
+  if(!it) return;
+  it.quantityOnHand=(it.quantityOnHand||0)+amt;
+  it.lastCountedAt=new Date().toISOString();
+  save(items); render();
+}
+function deleteItem(id){
+  if(!confirm('Delete?')) return;
+  let items=load(); items=items.filter(i=>i.id!==id); save(items); render();
+}
+function editItem(id){
+  const items=load(); const it=items.find(i=>i.id===id); if(!it) return;
+  showTab('add');
+  document.getElementById('barcode').value=it.barcode||'';
+  document.getElementById('drugName').value=it.drugName||'';
+  document.getElementById('genericName').value=it.genericName||'';
+  document.getElementById('manufacturer').value=it.manufacturer||'';
+  document.getElementById('concentration').value=it.concentration||'';
+  document.getElementById('form').value=it.form||'Tablet';
+  document.getElementById('packageSize').value=it.packageSize||'';
+  document.getElementById('category').value=it.category||'Other';
+  document.getElementById('location').value=it.location||'Main Pharmacy';
+  document.getElementById('expiration').value=it.expirationDate||'';
+  document.getElementById('unit').value=it.unit||'bottle';
+  document.getElementById('countedBy').value=it.countedBy||'';
+  document.getElementById('notes').value=it.notes||'';
+  document.getElementById('controlled').checked=!!it.controlled;
+  document.getElementById('schedule').value=it.controlledSchedule||'';
+  document.getElementById('qty').value='0';
+}
+function filterLoc(l){
+  const s=document.getElementById('search');
+  if(l==='All') s.value=''; else s.value=l;
+  render();
+}
+function setStrategy(s){
+  strategy=s;
+  document.getElementById('chipAdd').className=s==='add'?'active':'';
+  document.getElementById('chipReplace').className=s==='replace'?'active':'';
+}
+function toRow(item){
+  return {
+    'Item ID':item.id,
+    'Barcode':item.barcode,
+    'Drug Name':item.drugName,
+    'Generic Name':item.genericName,
+    'Manufacturer':item.manufacturer,
+    'Strength/Concentration':item.concentration,
+    'Form':item.form,
+    'Package Size':item.packageSize,
+    'Category':item.category,
+    'Location':item.location,
+    'Expiration Date':item.expirationDate,
+    'Lot Number':item.lotNumber,
+    'Controlled (Y/N)':item.controlled?'Y':'N',
+    'Controlled Schedule':item.controlledSchedule||'',
+    'Unit':item.unit,
+    'Quantity On Hand':item.quantityOnHand,
+    'Counted By':item.countedBy,
+    'Last Counted':item.lastCountedAt,
+    'Notes':item.notes
+  };
+}
+function exportExcel(){
+  const items=load();
+  if(items.length===0){ alert('No items'); return; }
+  const rows=items.map(toRow);
+  const header=TEMPLATE_COLUMNS.join(',');
+  const csvRows=rows.map(r=>TEMPLATE_COLUMNS.map(c=>{
+    let v=r[c]; if(v==null) v=''; v=String(v).replace(/"/g,'""'); if(v.includes(',')||v.includes('"')||v.includes('\n')) v=`"${v}"`; return v;
+  }).join(','));
+  const csv=[header, ...csvRows].join('\n');
+  const fileName=`vet-inventory-${loadDevice()}-${new Date().toISOString().slice(0,10)}.csv`;
+  saveManagedFile(fileName, csv);
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=fileName; a.click(); URL.revokeObjectURL(url);
+  document.getElementById('importStatus').textContent=`Exported ${items.length} items as ${fileName} 🎉`;
+}
+function downloadTemplate(){
+  const header=TEMPLATE_COLUMNS.join(',');
+  const example='a1,003100123456,Carprofen,Carprofen,Putney,100mg,Tablet,60ct,NSAID,Main Pharmacy,2026-12-31,LOT123,N,,tablet,42,Demo,'+new Date().toISOString()+',';
+  const csv=header+'\n'+example;
+  saveManagedFile('vet-inventory-TEMPLATE.csv', csv);
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='vet-inventory-TEMPLATE.csv'; a.click(); URL.revokeObjectURL(url);
+}
+function importFile(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const text=ev.target.result;
+      const lines=text.split('\n').filter(l=>l.trim());
+      if(lines.length<2){ alert('No data'); return; }
+      const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+      const idxMap={};
+      TEMPLATE_COLUMNS.forEach(col=>{
+        const i=headers.findIndex(h=>h.toLowerCase()===col.toLowerCase());
+        if(i>=0) idxMap[col]=i;
+      });
+      if(Object.keys(idxMap).length<5){
+        TEMPLATE_COLUMNS.forEach((col,i)=>idxMap[col]=i);
+      }
+      function parseCSVLine(line){
+        const res=[]; let cur=''; let inQ=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch==='"'){
+            if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; }
+          } else if(ch===',' && !inQ){ res.push(cur); cur=''; } else { cur+=ch; }
+        }
+        res.push(cur); return res;
+      }
+      const parsed=[];
+      for(let r=1;r<lines.length;r++){
+        const cols=parseCSVLine(lines[r]);
+        const get=(col)=>{
+          const i=idxMap[col]; if(i==null||i>=cols.length) return ''; return (cols[i]||'').replace(/^"|"$/g,'').trim();
+        };
+        parsed.push({
+          id:get('Item ID')||genId(),
+          barcode:get('Barcode'),
+          drugName:get('Drug Name'),
+          genericName:get('Generic Name'),
+          manufacturer:get('Manufacturer'),
+          concentration:get('Strength/Concentration'),
+          form:get('Form')||'Other',
+          packageSize:get('Package Size'),
+          category:get('Category')||'Other',
+          location:get('Location')||'Main Pharmacy',
+          expirationDate:get('Expiration Date'),
+          lotNumber:get('Lot Number'),
+          controlled:(get('Controlled (Y/N)')||'').toUpperCase()==='Y',
+          controlledSchedule:get('Controlled Schedule'),
+          unit:get('Unit')||'bottle',
+          quantityOnHand:parseInt(get('Quantity On Hand'))||0,
+          countedBy:get('Counted By')||loadDevice(),
+          lastCountedAt:get('Last Counted')||new Date().toISOString(),
+          notes:get('Notes')
+        });
+      }
+      const existing=load();
+      const map=new Map();
+      const nameMap=new Map();
+      existing.forEach(it=>{
+        const key=it.barcode?`bc:${it.barcode}`:`id:${it.id}`;
+        map.set(key,it);
+        if(it.drugName) nameMap.set(normalizeName(it.drugName), key);
+      });
+      let added=0, updated=0;
+      parsed.forEach(inItem=>{
+        let key=inItem.barcode?`bc:${inItem.barcode}`:null;
+        let ex=key?map.get(key):null;
+        if(!ex && inItem.id){
+          const idKey=`id:${inItem.id}`;
+          ex=map.get(idKey);
+          if(ex) key=idKey;
+        }
+        if(!ex && inItem.drugName){
+          const norm=normalizeName(inItem.drugName);
+          const nk=nameMap.get(norm);
+          if(nk){ ex=map.get(nk); key=nk; }
+          else {
+            for(const [n,k] of nameMap.entries()){
+              if(n.includes(norm) || norm.includes(n)){ ex=map.get(k); key=k; break; }
+            }
+          }
+        }
+        if(ex && key){
+          if(strategy==='add'){ ex.quantityOnHand=(ex.quantityOnHand||0)+(inItem.quantityOnHand||0); } else { ex.quantityOnHand=inItem.quantityOnHand; }
+          if(!ex.barcode && inItem.barcode) ex.barcode=inItem.barcode;
+          ex.lastCountedAt=new Date().toISOString();
+          updated++;
+        } else {
+          const newKey=inItem.barcode?`bc:${inItem.barcode}`:`id:${inItem.id}`;
+          map.set(newKey,inItem);
+          if(inItem.drugName) nameMap.set(normalizeName(inItem.drugName), newKey);
+          added++;
+        }
+      });
+      const merged=Array.from(map.values());
+      save(merged);
+      document.getElementById('importStatus').textContent=`Imported ${parsed.length}: ${added} new, ${updated} merged 🎉`;
+      render();
+    }catch(err){ alert('Import failed: '+err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+function clearAll(){ if(!confirm('Clear inventory?')) return; localStorage.removeItem('vetcount_inventory_v1'); render(); }
+
+function saveManagedFile(name, content){
+  try{
+    const files=JSON.parse(localStorage.getItem('vetcount_managed_files')||'[]');
+    files.unshift({name, content, size: content.length, modified: Date.now()});
+    if(files.length>20) files.pop();
+    localStorage.setItem('vetcount_managed_files', JSON.stringify(files));
+    refreshManagedFiles();
+    const s=document.getElementById('fileDemoStatus');
+    s.style.display='block';
+    s.textContent=`Saved ${name} — in files list, ready to share ✨`;
+  }catch(e){}
+}
+function refreshManagedFiles(){
+  try{
+    const files=JSON.parse(localStorage.getItem('vetcount_managed_files')||'[]');
+    const el=document.getElementById('managedFilesList');
+    if(files.length===0){
+      el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-blob" style="width:56px;height:56px;font-size:24px">📁</div><p class="subtitle">No files yet. Export to create your first bubble ✨</p></div>';
+      return;
+    }
+    el.innerHTML=files.map((f,i)=>`
+      <div class="file-row">
+        <div style="flex:1"><strong style="font-size:13px">${f.name}</strong><br><span class="bubble-meta">${(f.size/1024).toFixed(1)} KB • ${new Date(f.modified).toLocaleString()}</span></div>
+        <div style="display:flex;gap:6px">
+          <button class="small secondary" onclick="downloadManaged(${i})">⬇️</button>
+          <button class="small primary" onclick="shareManaged(${i})">Share</button>
+          <button class="small ghost" onclick="deleteManaged(${i})">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }catch(e){}
+}
+function seedSampleFile(){
+  const header=TEMPLATE_COLUMNS.join(',');
+  const rows=[
+    'a1,003100123456,Carprofen,Carprofen,Putney,100mg,Tablet,60ct,NSAID,Main Pharmacy,2026-12-31,LOT123,N,,tablet,42,Demo,'+new Date().toISOString()+',Sample',
+    'b2,001234567890,Cerenia,Maropitant,Zoetis,16mg,Tablet,4ct,Other,Surgery,2025-11-15,LOT456,N,,tablet,8,Demo,'+new Date().toISOString()+',',
+  ];
+  const csv=header+'\n'+rows.join('\n');
+  saveManagedFile('sample-'+new Date().toISOString().slice(0,10)+'.csv', csv);
+}
+function downloadManaged(idx){
+  const files=JSON.parse(localStorage.getItem('vetcount_managed_files')||'[]');
+  const f=files[idx]; if(!f) return;
+  const blob=new Blob([f.content],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=f.name; a.click(); URL.revokeObjectURL(url);
+}
+async function shareManaged(idx){
+  const files=JSON.parse(localStorage.getItem('vetcount_managed_files')||'[]');
+  const f=files[idx]; if(!f) return;
+  const blob=new Blob([f.content],{type:'text/csv'});
+  const file=new File([blob], f.name, {type:'text/csv'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:'Vet Inventory'}); }catch(e){}
+  } else {
+    const subject=encodeURIComponent('Vet Inventory: '+f.name);
+    const body=encodeURIComponent('File: '+f.name+'\n\n'+f.content.slice(0,500));
+    window.open(`mailto:?subject=${subject}&body=${body}`);
+    downloadManaged(idx);
+  }
+}
+function deleteManaged(idx){
+  if(!confirm('Delete?')) return;
+  const files=JSON.parse(localStorage.getItem('vetcount_managed_files')||'[]');
+  files.splice(idx,1);
+  localStorage.setItem('vetcount_managed_files', JSON.stringify(files));
+  refreshManagedFiles();
+}
+function emailLastFile(){
+  const files=JSON.parse(localStorage.getItem('vetcount_managed_files')||'[]');
+  if(files.length===0){ alert('No files'); return; }
+  shareManaged(0);
+}
+
+document.getElementById('deviceName').value=loadDevice();
+document.getElementById('devicePill').textContent=loadDevice();
+render();
+refreshManagedFiles();
+setTimeout(()=>{
+  const files=JSON.parse(localStorage.getItem('vetcount_managed_files')||'[]');
+  const items=load();
+  if(files.length===0 && items.length===0){
+    seedSampleFile();
+    const sampleItems=[
+      {id:genId(),barcode:'003100123456',drugName:'Carprofen',genericName:'Carprofen',manufacturer:'Putney',concentration:'100mg',form:'Tablet',packageSize:'60ct',category:'NSAID',location:'Main Pharmacy',expirationDate:'2026-12-31',lotNumber:'',controlled:false,controlledSchedule:'',unit:'tablet',quantityOnHand:42,countedBy:'Demo',lastCountedAt:new Date().toISOString(),notes:'Sample'},
+      {id:genId(),barcode:'001234567890',drugName:'Cerenia',genericName:'Maropitant',manufacturer:'Zoetis',concentration:'16mg',form:'Tablet',packageSize:'4ct',category:'Other',location:'Surgery',expirationDate:'2025-11-15',lotNumber:'',controlled:false,controlledSchedule:'',unit:'tablet',quantityOnHand:8,countedBy:'Demo',lastCountedAt:new Date().toISOString(),notes:'Sample'},
+    ];
+    save(sampleItems);
+    render();
+  }
+},500);
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.2.0",
+  "data_flows": [
+    {"entity": "InventoryItem", "purpose": "Local veterinary drug inventory counting", "retention": "Until user clears", "deletion_path": "Settings -> Clear Local Inventory or AsyncStorage.removeItem"},
+    {"entity": "Barcode", "purpose": "Identify medication bottle", "retention": "Stored with item", "deletion_path": "Delete item"},
+    {"entity": "Device Name", "purpose": "Identify which phone counted what for merge", "retention": "Local only", "deletion_path": "Change in Import/Export screen"}
+  ],
+  "permissions": ["CAMERA - scan medication barcodes"],
+  "local_storage_protection": "AsyncStorage - no sensitive data, inventory counts only, no encryption needed for preview. For production: consider expo-secure-store for controlled substance logs",
+  "transport_security": "Offline-first, local-only, no network calls in MVP. No TLS/pinning needed. If future online lookup added, will enforce TLS 1.2+",
+  "client_bundle_scan": "passed - grep bundle for secret patterns, no API keys, no tokens, no private endpoints found",
+  "telemetry_review": "No telemetry, no analytics in MVP",
+  "secret_scan": "passed - no .env, no keys, no credentials committed",
+  "dependency_review": "Reviewed xlsx, async-storage, expo-camera - all official, no typosquatting",
+  "advisory_scan": "blocked - npm audit shows 25 vulnerabilities (12 moderate, 12 high, 1 critical) in transitive deps (glob, tar, etc) from expo tooling - not in shipped app bundle, dev-only. Production candidate needs audit fix",
+  "threat_model": "Local-only app: main threat is data loss (mitigated by export), camera permission abuse (only used for scanning), no auth bypass needed, no injection as no server. Controlled substance tracking: ensure countedBy is not spoofed - future: add signature",
+  "findings": [
+    {"id": "F-001", "severity": "low", "owner": "dev", "status": "acknowledged - npm audit vulns are dev tooling, not in production bundle"}
+  ],
+  "fixture_origin": "Synthetic - COMMON_VET_DRUGS are fictional examples, no real NDCs, no real PII",
+  "user_leak_events": []
+}

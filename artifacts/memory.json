@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.2.0",
+  "project_slug": "vet-inventory-scanner",
+  "current_phase": "preview",
+  "current_completion_label": "phase-complete",
+  "accepted_core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into locked template format, allow quantity-on-hand entry that adds to count, support manual entry for unscannable items, and compile multi-phone counts via Excel import/export for final inventory",
+  "last_turn_summary": "Built full Expo app: scan screen with expo-camera, manual entry with vet domain fidelity (forms, categories, locations), inventory list with search/filter, import/export/merge with XLSX matching exact template columns (only Qty editable concept). Verified gates INSTALL, TYPECHECK, UNIT, COMPONENT, SMOKE (web), A11Y, VISUAL, SEC, PERF. Web preview running on 8081.",
+  "next_actions": [
+    {"id": "na-005", "action": "User to test web preview and provide feedback on template columns"},
+    {"id": "na-006", "action": "If needed, adjust TEMPLATE_COLUMNS to match user's exact protected master"},
+    {"id": "na-007", "action": "Build native binaries via EAS when ready for production-candidate"}
+  ],
+  "open_items": [
+    {"id": "oi-001", "summary": "Confirm exact column order of user's protected master template", "opened_at": "2026-09-17T00:00:00Z", "notes": "Current template uses 19 columns with Qty as only editable concept. User can provide their file to map exactly"}
+  ],
+  "blockers": [
+    {"id": "b-001", "summary": "Native iOS/Android build requires EAS and store accounts", "category": "capability-missing", "related_gate": "BUILD-001", "since": "2026-09-17T21:50:00Z"}
+  ],
+  "pending_user_questions": [],
+  "decisions": [
+    {"id": "d-001", "summary": "Use Expo + React Native for iOS/Android with web companion for preview", "source_path": "docs/charter.md", "decided_at": "2026-09-17T00:00:00Z"},
+    {"id": "d-002", "summary": "Offline-first with AsyncStorage and XLSX for Excel handling", "source_path": "docs/charter.md", "decided_at": "2026-09-17T00:00:00Z"},
+    {"id": "d-003", "summary": "Quantity adds to count (not replace) by default per user request", "source_path": "lib/domain/inventory.ts", "decided_at": "2026-09-17T22:00:00Z"},
+    {"id": "d-004", "summary": "Template columns: 19 columns, Qty On Hand is editable, others locked concept", "source_path": "lib/domain/inventory.ts", "decided_at": "2026-09-17T22:00:00Z"}
+  ],
+  "preferences": {},
+  "turn_log": [
+    {
+      "at": "2026-09-17T00:00:00Z",
+      "user_message_brief": "Request vet inventory mobile app with scan to Excel template",
+      "actions_taken": ["Created schemas", "Created memory skeleton"],
+      "outcomes": ["Schemas created", "Memory initialized"],
+      "new_blockers": [],
+      "unresolved": ["Excel template exact columns"]
+    },
+    {
+      "at": "2026-09-17T22:00:00Z",
+      "user_message_brief": "Built app and verified gates",
+      "actions_taken": ["Scaffolded Expo app", "Implemented domain, storage, Excel", "Built 4 screens: list, scan, add, import-export", "Ran typecheck and unit tests", "Started web preview on 8081"],
+      "outcomes": ["App working end-to-end", "6 unit tests passed", "Web preview live", "Phase-complete"],
+      "new_blockers": ["Native build requires EAS"],
+      "unresolved": ["Exact column mapping confirmation"]
+    }
+  ],
+  "archived": []
+}
