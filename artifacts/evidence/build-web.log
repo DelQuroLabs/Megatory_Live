@@ -1,1 +1,21 @@
-BUILD-001 web passed
+START 2026-09-18T00:42:19Z
+$ npx expo export --platform web
+Starting Metro Bundler
+Static rendering is enabled. Learn more: https://docs.expo.dev/router/reference/static-rendering/
+λ Bundled 1816ms node_modules/expo-router/node/render.js (624 modules)
+Web Bundled 2074ms node_modules/expo-router/entry.js (664 modules)
+
+› web bundles (1):
+_expo/static/js/web/entry-a1df7e13fdab300a7fc27386ca3a01da.js (1.43 MB)
+
+› Static routes (6):
+/add (53.1 kB)
+/scan (34.5 kB)
+/ (index) (37.8 kB)
+/_sitemap (38.2 kB)
+/+not-found (35.5 kB)
+/import-export (39.1 kB)
+
+Exported: dist
+exit=0
+END 2026-09-18T00:42:24Z

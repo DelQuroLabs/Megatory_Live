@@ -1,1 +1,26 @@
-SEC-001 passed
+START 2026-09-18T00:45:35Z
+$ grep -rInE '(api[_-]?key|apikey|secret|passwd|password|token|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY|AKIA[0-9A-Z]{16}|xox[baprs]-|ghp_[A-Za-z0-9]{36})' app lib __tests__ *.js *.json
+hits=0
+
+$ ls -a | grep -iE '^\.env|\.pem$|\.key$|\.p12$|\.keystore$'
+none found
+
+$ client-bundle pattern scan (bundle = 5283161 bytes, HTTP 200)
+  AKIA[0-9A-Z]{16}           0
+  ghp_[A-Za-z0-9]{36}        0
+  xox[baprs]-                0
+  BEGIN RSA PRIVATE KEY      0
+  sk-[A-Za-z0-9]{20}         0
+
+$ absolute localhost refs in client bundle: 2
+  both occurrences are inside Expo SDK dev-only stack-trace parsing:
+   ..._stacktraceParser.parse)(stack).map(frame => {       // frame.file will mostly look like `http://localhost:8081/index.bundle?platform=we...
+   ...  // {"originModulePath":"/Users/evanbacon/Documents/GitHub/expo/.","targetModuleName":"./http://localhost:8081/node_modules/react-nativ...
+  -> not app network calls; browser-facing code makes no localhost calls.
+
+$ permissions declared in package.json expo config
+  android.permissions: ['android.permission.CAMERA']
+  ios.infoPlist: {'NSCameraUsageDescription': 'Scan medication barcodes for inventory counting'}
+  plugins: ['expo-router', 'expo-camera']
+
+END 2026-09-18T00:45:35Z

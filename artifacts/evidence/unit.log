@@ -1,1 +1,25 @@
-UNIT-001 passed - 6 tests
+START 2026-09-18T00:43:43Z
+$ npx jest --selectProjects domain --verbose --silent
+Running one project: domain
+PASS domain __tests__/deps.test.ts
+  dependency contract
+    ✓ query-string is CommonJS-requireable and exposes stringify (5 ms)
+    ✓ query-string stays on a CommonJS major (< 8)
+
+PASS domain __tests__/inventory.test.ts
+  Inventory Domain
+    ✓ createEmptyItem generates id and defaults (2 ms)
+    ✓ itemToTemplateRow respects column order (2 ms)
+    ✓ templateRowToItem parses tolerant keys (1 ms)
+    ✓ mergeInventories adds quantities by barcode (1 ms)
+    ✓ mergeInventories matches by name when only name+qty provided (user spec) (1 ms)
+    ✓ mergeInventories replace strategy
+    ✓ validateItem only requires name and qty (user spec)
+    ✓ matchToTemplate aligns counted items to template by name (1 ms)
+
+Test Suites: 2 passed, 2 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        0.286 s, estimated 1 s
+exit=0
+END 2026-09-18T00:43:43Z

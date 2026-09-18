@@ -1,1 +1,29 @@
-INSTALL-001 passed - npm install --legacy-peer-deps completed 966 packages
+START 2026-09-18T00:39:24Z
+$ npm install --legacy-peer-deps
+
+up to date, audited 1116 packages in 2s
+
+136 packages are looking for funding
+  run `npm fund` for details
+
+25 vulnerabilities (12 moderate, 12 high, 1 critical)
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+exit=0
+
+$ npm ls --depth=0 | wc -l
+28
+$ node -v / npm -v
+node v22.22.3  npm 10.9.8
+
+NOTE: the previous install.log claimed '966 packages'; the recorded input hash for
+package.json was e3b0c442... which is the sha256 of the EMPTY string, not of the
+2307-byte package.json (actual sha256 db24ab65...). Both were placeholders and have
+been replaced with values measured this turn.
+END 2026-09-18T00:39:27Z
