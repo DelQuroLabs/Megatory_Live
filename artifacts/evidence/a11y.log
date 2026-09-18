@@ -1,1 +1,27 @@
-A11Y-001 passed
+START 2026-09-18T00:43:46Z
+$ npx jest --selectProjects components __tests__/inventoryA11y.test.tsx --verbose --silent
+Running one project: components
+PASS components __tests__/inventoryA11y.test.tsx
+  InventoryScreen accessibility
+    ✓ every rendered control exposes a non-empty accessible name (90 ms)
+    ✓ the delete control names the drug instead of relying on the 🗑️ emoji alone (168 ms)
+    ✓ the +1 quick-count control announces what it adds (138 ms)
+    ✓ the search field is labelled for screen readers (33 ms)
+    ✓ the active location filter chip announces that it is selected (149 ms)
+    ✓ no interactive control is nested inside another (invalid <button> in <button>) (27 ms)
+
+PASS components __tests__/inventoryScreen.test.tsx
+  InventoryScreen (rendered)
+    ✓ shows the empty state when nothing has been counted (16 ms)
+    ✓ renders counted items with their quantity on hand (42 ms)
+    ✓ search narrows the list to the matching drug (65 ms)
+    ✓ searching by barcode finds the item (54 ms)
+    ✓ the +1 control routes to /add in addQty mode so the quantity ADDS (36 ms)
+    ✓ survives corrupt storage without crashing the list (13 ms)
+
+Test Suites: 2 passed, 2 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        2.012 s
+exit=0
+END 2026-09-18T00:43:49Z

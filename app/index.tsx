@@ -43,7 +43,14 @@ export default function InventoryScreen() {
   };
 
   const renderItem = ({ item }: { item: InventoryItem }) => (
-    <TouchableOpacity style={styles.card} onPress={() => router.push({ pathname: '/add', params: { id: item.id } })}>
+    // Plain View, not a TouchableOpacity: the card used to wrap the
+    // +1 / Edit / delete controls, which renders <button> inside <button> on
+    // the web target (invalid DOM nesting and an a11y violation). The Edit
+    // control already performs the exact same navigation, so nothing is lost.
+    <View
+      style={styles.card}
+      accessibilityLabel={`${item.drugName || 'Unnamed drug'}, ${item.quantityOnHand} ${item.unit} on hand`}
+    >
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.drugName}>{item.drugName || 'Unnamed Drug'}</Text>
@@ -56,17 +63,32 @@ export default function InventoryScreen() {
       </View>
       {item.genericName ? <Text style={styles.generic}>{item.genericName} {item.concentration ? `• ${item.concentration}` : ''}</Text> : null}
       <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.btnBubble} onPress={() => router.push({ pathname: '/add', params: { id: item.id, mode: 'addQty' } })}>
+        <TouchableOpacity
+          style={styles.btnBubble}
+          onPress={() => router.push({ pathname: '/add', params: { id: item.id, mode: 'addQty' } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Add one ${item.drugName || 'unnamed drug'}`}
+        >
           <Text style={styles.btnBubbleText}>+1</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btnBubble, styles.btnBubbleSecondary]} onPress={() => router.push({ pathname: '/add', params: { id: item.id } })}>
+        <TouchableOpacity
+          style={[styles.btnBubble, styles.btnBubbleSecondary]}
+          onPress={() => router.push({ pathname: '/add', params: { id: item.id } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit ${item.drugName || 'unnamed drug'}`}
+        >
           <Text style={[styles.btnBubbleText, { color: '#15284C' }]}>Edit</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btnBubble, styles.btnBubbleGhost]} onPress={() => handleDelete(item.id)}>
+        <TouchableOpacity
+          style={[styles.btnBubble, styles.btnBubbleGhost]}
+          onPress={() => handleDelete(item.id)}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${item.drugName || 'unnamed drug'} from this device count`}
+        >
           <Text style={[styles.btnBubbleText, { color: '#94a3b8' }]}>🗑️</Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -81,6 +103,7 @@ export default function InventoryScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search meds, barcode, brand..."
+          accessibilityLabel="Search inventory by drug name, barcode, or brand"
           value={search}
           onChangeText={setSearch}
           placeholderTextColor="#94a3b8"
@@ -95,7 +118,16 @@ export default function InventoryScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
           renderItem={({ item: loc }) => (
-            <TouchableOpacity style={[styles.filterChip, filterLocation === loc && styles.filterChipActive]} onPress={() => setFilterLocation(loc)}>
+            <TouchableOpacity
+              style={[styles.filterChip, filterLocation === loc && styles.filterChipActive]}
+              onPress={() => setFilterLocation(loc)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: filterLocation === loc }}
+              // accessibilityState.selected is not surfaced as aria-selected by
+              // react-native-web 0.19, so the state is also carried in the
+              // accessible label to stay announced on the web target.
+              accessibilityLabel={`Filter by location ${loc}${filterLocation === loc ? ' (selected)' : ''}`}
+            >
               <Text style={[styles.filterChipText, filterLocation === loc && styles.filterChipTextActive]}>{loc}</Text>
             </TouchableOpacity>
           )}
@@ -108,8 +140,16 @@ export default function InventoryScreen() {
           <Text style={styles.emptyTitle}>No stock yet</Text>
           <Text style={styles.emptyText}>Scan a bottle or add manually. Fast, offline quarterly count</Text>
           <View style={styles.emptyActions}>
-            <Link href="/scan" asChild><TouchableOpacity style={styles.primaryBtn}><Text style={styles.primaryBtnText}>📷 Scan</Text></TouchableOpacity></Link>
-            <Link href="/add" asChild><TouchableOpacity style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>＋ Add</Text></TouchableOpacity></Link>
+            <Link href="/scan" asChild>
+              <TouchableOpacity style={styles.primaryBtn} accessibilityRole="button" accessibilityLabel="Scan a bottle barcode">
+                <Text style={styles.primaryBtnText}>📷 Scan</Text>
+              </TouchableOpacity>
+            </Link>
+            <Link href="/add" asChild>
+              <TouchableOpacity style={styles.secondaryBtn} accessibilityRole="button" accessibilityLabel="Add an item manually">
+                <Text style={styles.secondaryBtnText}>＋ Add</Text>
+              </TouchableOpacity>
+            </Link>
           </View>
         </View>
       ) : (

@@ -41,8 +41,8 @@ export default function ScanScreen() {
         <View style={styles.emptyBlob}><Text style={{ fontSize: 36 }}>📷</Text></View>
         <Text style={styles.title}>Camera needed</Text>
         <Text style={styles.sub}>We need camera to scan med bottles</Text>
-        <TouchableOpacity style={styles.btn} onPress={requestPermission}><Text style={styles.btnText}>Grant Permission</Text></TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={() => router.back()}><Text style={[styles.btnText, { color: '#15284C' }]}>Go Back</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Grant camera permission" style={styles.btn} onPress={requestPermission}><Text style={styles.btnText}>Grant Permission</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back from camera permission" style={[styles.btn, styles.btnSecondary]} onPress={() => router.back()}><Text style={[styles.btnText, { color: '#15284C' }]}>Go Back</Text></TouchableOpacity>
       </View>
     );
   }
@@ -63,9 +63,9 @@ export default function ScanScreen() {
         </View>
       </CameraView>
       <View style={styles.bottom}>
-        <TouchableOpacity style={styles.btn} onPress={() => setScanned(false)}><Text style={styles.btnText}>{scanned ? 'Scan Again' : 'Ready to Scan'}</Text></TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={() => router.back()}><Text style={[styles.btnText, { color: '#15284C' }]}>Cancel</Text></TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnTertiary]} onPress={() => router.replace({ pathname: '/add', params: { barcode: lastData || '' } })}><Text style={styles.btnText}>＋ Manual</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={scanned ? "Scan another barcode" : "Ready to scan barcode"} style={styles.btn} onPress={() => setScanned(false)}><Text style={styles.btnText}>{scanned ? 'Scan Again' : 'Ready to Scan'}</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back from camera permission" style={[styles.btn, styles.btnSecondary]} onPress={() => router.back()}><Text style={[styles.btnText, { color: '#15284C' }]}>Cancel</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Enter medication manually" style={[styles.btn, styles.btnTertiary]} onPress={() => router.replace({ pathname: '/add', params: { barcode: lastData || '' } })}><Text style={styles.btnText}>＋ Manual</Text></TouchableOpacity>
       </View>
     </View>
   );

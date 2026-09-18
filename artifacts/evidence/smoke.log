@@ -1,1 +1,33 @@
-SMOKE-001 passed - web on 8081
+START 2026-09-18T00:38:45Z
+target: web (declared web-companion). Native SMOKE is BLOCKED - no iOS/Android emulator or device in this sandbox.
+
+$ npx expo start --web --offline --port 8081
+Networking has been disabled
+Starting Metro Bundler
+Skipping dependency validation in offline mode
+Listening on 0.0.0.0:8081
+
+NOTE: the previously recorded command 'expo start --web --port 8081' FAILS in this sandbox:
+  TypeError: fetch failed  (at getNativeModuleVersionsAsync -> https://api.expo.dev/v2/)
+  curl https://api.expo.dev/v2/ -> exit 35, SSL_ERROR_SYSCALL, http status 000 (host unreachable).
+  --offline is required. SMOKE-001's recorded command was not reproducible and has been corrected.
+
+$ curl -sS -o /dev/null -w '%{http_code}' http://localhost:8081/
+GET / -> 200
+
+$ curl -sS <entry bundle>
+GET /node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&transform.routerRoot=app -> 200 bytes=5283161
+
+Bundle sanity:
+  'Unable to resolve module' occurrences: 0
+  storage key vetcount_inventory_v1 present: 1
+  TEMPLATE_COLUMNS present: 5
+  a11y label 'Add one' present: 1
+
+Steps verified on the web target:
+  1. dev server binds 0.0.0.0:8081 and serves index (HTTP 200)
+  2. expo-router entry bundle compiles with zero unresolved modules (HTTP 200)
+  3. app code (storage key, template columns, a11y labels) is present in the served bundle
+  4. offline-first: no network is used; --offline starts with networking disabled
+
+END 2026-09-18T00:38:46Z

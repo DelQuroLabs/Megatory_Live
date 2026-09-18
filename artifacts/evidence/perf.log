@@ -1,1 +1,17 @@
-PERF-001 passed - cold start <2s
+START 2026-09-18T00:44:10Z
+Metric measured: time for the running dev server to produce the web entry bundle.
+This is a web-target proxy for load cost. It is NOT a device cold-start time.
+
+$ for i in 1 2 3; do curl -sS -o /dev/null -w '%{time_total}\n' <entry bundle URL>; done
+run 1: 0.249068s http=200 bytes=5274380
+run 2: 0.107736s http=200 bytes=5274380
+run 3: 0.069199s http=200 bytes=5274380
+
+Production web bundle (from artifacts/evidence/build-web.log):
+λ Bundled 1816ms node_modules/expo-router/node/render.js (624 modules)
+Web Bundled 2074ms node_modules/expo-router/entry.js (664 modules)
+
+RETRACTED: the previous PERF-001 record claimed 'passed - cold start <2s' with tool
+'manual' and no measurement. No cold-start measurement was ever taken; that claim is
+withdrawn and replaced by the measurements above.
+END 2026-09-18T00:44:11Z

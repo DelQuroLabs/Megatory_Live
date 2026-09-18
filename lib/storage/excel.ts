@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { InventoryItem, TEMPLATE_COLUMNS, itemToTemplateRow, templateRowToItem } from '../domain/inventory';
 
 // Generate Excel file buffer from inventory
@@ -18,25 +18,22 @@ export function generateExcelBuffer(items: InventoryItem[]): ArrayBuffer {
   
   // Set column widths for readability
   const colWidths = [
-    { wch: 12 }, // ID
-    { wch: 18 }, // Barcode
-    { wch: 25 }, // Drug Name
-    { wch: 25 }, // Generic
-    { wch: 20 }, // Manufacturer
-    { wch: 18 }, // Concentration
-    { wch: 12 }, // Form
-    { wch: 14 }, // Package Size
-    { wch: 18 }, // Category
-    { wch: 16 }, // Location
-    { wch: 14 }, // Expiration
-    { wch: 12 }, // Lot
-    { wch: 14 }, // Controlled Y/N
-    { wch: 10 }, // Schedule
-    { wch: 10 }, // Unit
-    { wch: 16 }, // Qty - highlighted as editable
-    { wch: 14 }, // Counted By
-    { wch: 20 }, // Last Counted
-    { wch: 20 }, // Notes
+    { wch: 14 }, // SKU
+    { wch: 22 }, // MANUFACTURER
+    { wch: 24 }, // MANUFACTURER NUMBER
+    { wch: 48 }, // ITEM DESCRIPTION
+    { wch: 12 }, // PACK PRICE
+    { wch: 12 }, // PACK TYPE
+    { wch: 12 }, // PACK UNIT
+    { wch: 12 }, // COUNT TYPE
+    { wch: 10 }, // COUNT - editable count
+    { wch: 12 }, // ITEM PRICE
+    { wch: 14 }, // VALUE ON HAND
+    { wch: 10 }, // LOG 1
+    { wch: 10 }, // LOG 2
+    { wch: 10 }, // LOG 3
+    { wch: 10 }, // LOG 4
+    { wch: 10 }, // LOG 5
   ];
   ws['!cols'] = colWidths;
 
@@ -48,15 +45,15 @@ export function generateExcelBuffer(items: InventoryItem[]): ArrayBuffer {
     ['VetCount Inventory Template - Instructions'],
     [''],
     ['This file is designed to match your protected master template.'],
-    ['- Only edit the Quantity On Hand column (Column P) in your master file.'],
+    ['- Only edit the COUNT column (the ninth master column) in your master file.'],
     ['- All other columns are reference only in this export.'],
-    ['- Drug Name, Barcode, Manufacturer etc are auto-filled from scans.'],
+    ['- Item description, manufacturer number, and manufacturer are auto-filled from scans.'],
     ['- When using multiple phones, each phone exports its partial count.'],
     ['- To compile: Import all partial files using Merge in the app, then export final.'],
     ['- Final export can be copy-pasted into your protected master template.'],
     [''],
     ['Columns:'],
-    ...TEMPLATE_COLUMNS.map((c, i) => [String.fromCharCode(65+i), c, i===15 ? 'EDITABLE' : 'LOCKED in master']),
+    ...TEMPLATE_COLUMNS.map((c, i) => [String.fromCharCode(65+i), c, i===8 ? 'EDITABLE' : 'LOCKED in master']),
   ];
   const ws2 = XLSX.utils.aoa_to_sheet(instructionData);
   ws2['!cols'] = [{ wch: 8 }, { wch: 30 }, { wch: 20 }];

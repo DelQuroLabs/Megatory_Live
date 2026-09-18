@@ -117,18 +117,18 @@ export default function ImportExportScreen() {
       <View style={[styles.card, styles.soft1]}>
         <Text style={styles.cardTitle}>📱 Device Identity</Text>
         <Text style={styles.cardDesc}>Name this phone so merges show who counted</Text>
-        <TextInput style={styles.input} value={deviceName} onChangeText={setDeviceName} placeholder="e.g. Pharmacy-iPad" placeholderTextColor="#94a3b8" />
-        <TouchableOpacity style={styles.btn} onPress={handleSaveDeviceName}><Text style={styles.btnText}>Save Device</Text></TouchableOpacity>
+        <TextInput style={styles.input} value={deviceName} onChangeText={setDeviceName} accessibilityLabel="Device name" placeholder="e.g. Pharmacy-iPad" placeholderTextColor="#94a3b8" />
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Save device name" style={styles.btn} onPress={handleSaveDeviceName}><Text style={styles.btnText}>Save Device</Text></TouchableOpacity>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>⇅ Import / Export</Text>
         <Text style={styles.cardDesc}>Only Name+Qty required. Smart matching by barcode then name 💫</Text>
-        <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={handleExport}><Text style={styles.btnText}>📤 Export to Excel</Text></TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={handleImport}><Text style={styles.btnText}>📥 Import Excel / CSV</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Export inventory to Excel" style={[styles.btn, styles.btnPrimary]} onPress={handleExport}><Text style={styles.btnText}>📤 Export to Excel</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Import Excel or CSV inventory" style={[styles.btn, styles.btnSecondary]} onPress={handleImport}><Text style={styles.btnText}>📥 Import Excel / CSV</Text></TouchableOpacity>
         <View style={styles.pillBar}>
-          <TouchableOpacity style={[styles.pillBtn, mergeStrategy === 'add' && styles.pillBtnActive]} onPress={() => setMergeStrategy('add')}><Text style={[styles.pillText, mergeStrategy === 'add' && styles.pillTextActive]}>Add qty</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.pillBtn, mergeStrategy === 'replace' && styles.pillBtnActive]} onPress={() => setMergeStrategy('replace')}><Text style={[styles.pillText, mergeStrategy === 'replace' && styles.pillTextActive]}>Replace</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: mergeStrategy === 'add' }} accessibilityLabel={`Merge mode Add quantities${mergeStrategy === 'add' ? ' (selected)' : ''}`} style={[styles.pillBtn, mergeStrategy === 'add' && styles.pillBtnActive]} onPress={() => setMergeStrategy('add')}><Text style={[styles.pillText, mergeStrategy === 'add' && styles.pillTextActive]}>Add qty</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: mergeStrategy === 'replace' }} accessibilityLabel={`Merge mode Replace${mergeStrategy === 'replace' ? ' (selected)' : ''}`} style={[styles.pillBtn, mergeStrategy === 'replace' && styles.pillBtnActive]} onPress={() => setMergeStrategy('replace')}><Text style={[styles.pillText, mergeStrategy === 'replace' && styles.pillTextActive]}>Replace</Text></TouchableOpacity>
         </View>
         {lastImport && <View style={styles.resultBox}><Text style={styles.resultText}>Last import: {lastImport.added} new, {lastImport.updated} updated</Text></View>}
       </View>
@@ -140,11 +140,11 @@ export default function ImportExportScreen() {
           {managedFiles.length === 0 ? <Text style={styles.small}>No files yet. Export to create file</Text> : managedFiles.map(file => (
             <View key={file.uri} style={styles.fileRow}>
               <View style={{ flex: 1 }}><Text style={styles.fileName}>{file.name}</Text><Text style={styles.fileMeta}>{formatFileSize(file.size)} • {new Date(file.modified*1000).toLocaleString()}</Text></View>
-              <TouchableOpacity style={styles.fileBtn} onPress={() => handleShareFile(file)}><Text style={styles.fileBtnText}>Share</Text></TouchableOpacity>
-              <TouchableOpacity style={[styles.fileBtn, styles.fileBtnDelete]} onPress={() => handleDeleteFile(file)}><Text style={styles.fileBtnText}>🗑️</Text></TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Share ${file.name}`} style={styles.fileBtn} onPress={() => handleShareFile(file)}><Text style={styles.fileBtnText}>Share</Text></TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Delete ${file.name}`} style={[styles.fileBtn, styles.fileBtnDelete]} onPress={() => handleDeleteFile(file)}><Text style={styles.fileBtnText}>🗑️</Text></TouchableOpacity>
             </View>
           ))}
-          <TouchableOpacity style={[styles.btn, { marginTop: 12, backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0' }]} onPress={refreshFiles}><Text style={[styles.btnText, { color: '#475569' }]}>Refresh</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Refresh saved files" style={[styles.btn, { marginTop: 12, backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0' }]} onPress={refreshFiles}><Text style={[styles.btnText, { color: '#475569' }]}>Refresh</Text></TouchableOpacity>
         </View>
       )}
 
@@ -160,12 +160,12 @@ export default function ImportExportScreen() {
       <View style={[styles.card, styles.soft3]}>
         <Text style={styles.cardTitle}>📄 Template</Text>
         <Text style={styles.cardDesc}>Need column layout? Download empty template with Instructions</Text>
-        <TouchableOpacity style={styles.btn} onPress={handleTemplateDownload}><Text style={styles.btnText}>Download Template</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Download empty inventory template" style={styles.btn} onPress={handleTemplateDownload}><Text style={styles.btnText}>Download Template</Text></TouchableOpacity>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Danger Zone</Text>
-        <TouchableOpacity style={[styles.btn, styles.btnDanger]} onPress={handleClear}><Text style={styles.btnText}>🗑️ Clear Local (files stay)</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Clear all local inventory counts" style={[styles.btn, styles.btnDanger]} onPress={handleClear}><Text style={styles.btnText}>🗑️ Clear Local (files stay)</Text></TouchableOpacity>
       </View>
 
       <View style={styles.statusBox}><Text style={styles.statusLabel}>Status</Text><Text style={styles.statusText}>{status}</Text></View>
