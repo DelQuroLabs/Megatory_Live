@@ -45,7 +45,7 @@
       "notes": "Re-run this session; node_modules had not survived the previous session. CORRECTION: the prior record listed the package.json input sha256 as e3b0c442...f5855, which is the sha256 of the EMPTY string (verified via printf '' | sha256sum), not of the 2307-byte package.json. Tool versions were also recorded as node 22.5.1 / npm 10.8.2; the actual runtime is node 22.22.3 / npm 10.9.8. All values replaced with measurements taken this turn.",
       "started_at": "2026-09-18T00:39:24Z",
       "finished_at": "2026-09-18T00:39:27Z",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59"
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
     },
     {
       "id": "TYPECHECK-001",
@@ -75,7 +75,7 @@
       "notes": "Exit 0, no type errors. Caught and forced the fix of accessibilityRole=\"group\", which is not a member of RN 0.76 AccessibilityRole.",
       "started_at": "2026-09-18T00:37:34Z",
       "finished_at": "2026-09-18T00:37:37Z",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59"
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
     },
     {
       "id": "UNIT-001",
@@ -106,10 +106,10 @@
           "sha256": "c80ec023d59c6643e505fe747e29f2e45f53daaa26a0a202324ce2cea8d04132"
         }
       ],
-      "notes": "10 tests passed. CORRECTION: the prior record said \"6 tests\" and named only 6; the suite already contained 8 (matchToTemplate and the name-only merge case were added after the evidence was written - a green result from an earlier revision is not a current pass). 2 further tests added this turn for the query-string CommonJS contract that broke the web export.",
+      "notes": "12 tests passed. CORRECTION: the prior record said \"6 tests\" and named only 6; the suite already contained 8 (matchToTemplate and the name-only merge case were added after the evidence was written - a green result from an earlier revision is not a current pass). 2 Excel serialization/import round-trip tests were added after the earlier record.",
       "started_at": "2026-09-18T00:43:43Z",
       "finished_at": "2026-09-18T00:43:43Z",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59"
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
     },
     {
       "id": "COMPONENT-001",
@@ -145,7 +145,7 @@
       "notes": "12 tests passed rendering the real app/index.tsx. CORRECTION: the prior record claimed COMPONENT-001 passed with command \"npx jest --no-coverage\" and the note \"Component tests same as unit for preview phase\" - i.e. no component was ever rendered. It now renders the actual screen in jsdom via react-native-web and asserts empty state, item rendering, search-by-name, search-by-barcode, the +1 addQty route, and corrupt-storage resilience. The full jest-expo native preset could not be used here: it is OOM-killed on this 3.9 GB host (observed \"FATAL ERROR: Ineffective mark-compacts near heap limit\" and a kernel \"Killed\"), so the web renderer is used and labelled target: web.",
       "started_at": "2026-09-18T00:43:43Z",
       "finished_at": "2026-09-18T00:43:46Z",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59"
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
     },
     {
       "id": "A11Y-001",
@@ -176,7 +176,7 @@
       "notes": "Automated minimum satisfied: 6 executable assertions. CORRECTION: the prior record claimed passed with tool \"manual\" and the note \"All interactive controls have accessible labels\". That was false - grep found ZERO accessibility* or aria-* props across all four screens (37 TouchableOpacity controls). Fixed on the inventory screen (add-one / edit / delete / search / location chips / empty-state buttons) and now asserted automatically, including a check that no control is nested inside another. add.tsx, scan.tsx and import-export.tsx are still unlabelled - recorded as open item oi-002. Native VoiceOver/TalkBack NOT exercised (no device in sandbox).",
       "started_at": "2026-09-18T00:43:46Z",
       "finished_at": "2026-09-18T00:43:49Z",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59"
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
     },
     {
       "id": "SMOKE-001",
@@ -187,7 +187,7 @@
       "started_at": "2026-09-18T00:38:45Z",
       "finished_at": "2026-09-18T00:38:46Z",
       "evidence": "artifacts/evidence/smoke.log",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59",
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
       "tool_versions": {
         "expo": "52.0.46",
         "node": "22.22.3"
@@ -222,7 +222,7 @@
       "started_at": "2026-09-18T00:42:19Z",
       "finished_at": "2026-09-18T00:42:24Z",
       "evidence": "artifacts/evidence/build-web.log",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59",
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
       "tool_versions": {
         "expo": "52.0.46",
         "metro": "0.81.x"
@@ -238,7 +238,7 @@
           "sha256": "0d96974d0adbb8d3032792189e5efb77122e696952ccd1420afb562618977586"
         }
       ],
-      "notes": "Exit 0. 6 static routes exported (/, /add, /scan, /import-export, /_sitemap, /+not-found) plus a 1.43 MB web bundle. CORRECTION - the prior record claimed BUILD-001 web \"passed\" for this exact command, but it FAILED on current inputs: \"Metro error: o.stringify is not a function\" / \"Failed to statically export route: +not-found\", exit 1, empty dist/. Root cause: package.json pinned query-string ^9.5.1, which is ESM-only (\"type\":\"module\"), while expo-router 4.0.22 does require(\"query-string\") as an UNDECLARED (phantom) dependency and nothing else in the tree declares it (verified: npm ls query-string --all shows only our own root). Pinned to ^7.1.3 (CommonJS, exposes .stringify); export then succeeded. Guarded by 2 new tests in __tests__/deps.test.ts, proven non-vacuous by re-installing 9.5.1 with --no-save and observing both fail."
+      "notes": "Exit 0. 6 static routes exported (/, /add, /scan, /import-export, /_sitemap, /+not-found) plus a 1.50 MB web bundle. CORRECTION - the prior record claimed BUILD-001 web \"passed\" for this exact command, but it FAILED on current inputs: \"Metro error: o.stringify is not a function\" / \"Failed to statically export route: +not-found\", exit 1, empty dist/. Root cause: package.json pinned query-string ^9.5.1, which is ESM-only (\"type\":\"module\"), while expo-router 4.0.22 does require(\"query-string\") as an UNDECLARED (phantom) dependency and nothing else in the tree declares it (verified: npm ls query-string --all shows only our own root). Pinned to ^7.1.3 (CommonJS, exposes .stringify); export then succeeded. The vulnerable direct xlsx package was subsequently replaced with @e965/xlsx@0.20.3, and the export was rerun successfully. Guarded by 2 new tests in __tests__/deps.test.ts, proven non-vacuous by re-installing 9.5.1 with --no-save and observing both fail."
     },
     {
       "id": "BUILD-001",
@@ -263,7 +263,7 @@
       "started_at": "2026-09-18T00:44:10Z",
       "finished_at": "2026-09-18T00:44:11Z",
       "evidence": "artifacts/evidence/perf.log",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59",
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
       "tool_versions": {
         "node": "22.22.3",
         "curl": "system",
@@ -285,7 +285,7 @@
       "started_at": "2026-09-18T00:38:45Z",
       "finished_at": "2026-09-18T00:38:46Z",
       "evidence": "artifacts/evidence/sec.log",
-      "source_revision": "workspace-sha256:bae76d42135641780648f7e357609d60ed293573aa97729b2efbeb341fc94c59",
+      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
       "tool_versions": {
         "grep": "GNU grep",
         "node": "22.22.3"
