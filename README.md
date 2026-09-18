@@ -119,3 +119,7 @@ The supplied master image is now reflected 1:1 in `TEMPLATE_COLUMNS`; `COUNT` is
 ## License
 
 MIT — $0/month cost ceiling
+
+## Deployment
+
+GitHub Actions deployment is configured in `.github/workflows/deploy-web.yml`. It verifies the app and publishes the static web export to GitHub Pages. Backend deployment and API contract notes are in `docs/DEPLOYMENT.md`; the browser client defaults to `https://megatory-live.delqurolabs.app/api` and does not contain credentials.
