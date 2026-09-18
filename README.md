@@ -56,7 +56,7 @@ Sample file: `assets/sample-vet-inventory.xlsx`
 ## Storage
 
 - `AsyncStorage` key `vetcount_inventory_v1`
-- `lib/storage/excel.ts` uses `xlsx` (SheetJS) for import/export
+- `lib/storage/excel.ts` uses the maintained `@e965/xlsx` fork for import/export; the vulnerable unmaintained `xlsx` package was removed
 
 ## Verification
 
@@ -109,7 +109,7 @@ The previous records over-claimed. Specifically:
   `__tests__/deps.test.ts` fails if this regresses.
 - `add.tsx`, `scan.tsx` and `import-export.tsx` still have no accessibility labels (31 of
   the 37 touch controls).
-- 26 `npm audit` advisories (13 moderate / 12 high / 1 critical) are **not triaged**.
+- 27 `npm audit` advisories (15 moderate / 11 high / 1 critical) remain in the Expo/React Native toolchain and are **not yet triaged**. The direct vulnerable `xlsx` dependency was removed and replaced with `@e965/xlsx`.
 
 
 ## Next: Match Your Exact Template

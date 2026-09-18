@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { InventoryItem, TEMPLATE_COLUMNS, itemToTemplateRow, templateRowToItem } from '../domain/inventory';
 
 // Generate Excel file buffer from inventory
