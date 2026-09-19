@@ -4,7 +4,7 @@
   "current_phase": "preview",
   "current_completion_label": "incomplete",
   "accepted_core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into the Q3-2026 hospital Excel, enter quantity that adds to COUNT, support manual entry, and share one hospital notebook across clocks then export MEGATORY_<code>_3Q2026.xlsx",
-  "last_turn_summary": "Re-audit of 4f9c108. TEST-AUDIT script file still missing on disk. tsc clean; 65 tests pass. A11Y-001 now passed for names + primary minHeight 44 (residual Scan againBtn). Pages https_enforced=true (was false). MQTT/PIN/advisories still open. incomplete. No self-waiver.",
+  "last_turn_summary": "Re-audit of 9549794 after Scan again/Go 44pt. Script file still missing on disk. tsc clean; 65 tests pass; Pages 35465432722 success; https_enforced true. A11Y residual now ShareQr Copy link only. MQTT/PIN/own-server still open. incomplete. No self-waiver.",
   "next_actions": [
     {
       "id": "na-server",
@@ -22,11 +22,6 @@
     {
       "id": "na-excel-human",
       "action": "Human compare export against MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx"
-    },
-    {
-      "id": "na-scan-again",
-      "action": "Give Scan 'Scan again' and lookup Go minHeight 44",
-      "gate": "A11Y-001"
     }
   ],
   "open_items": [
@@ -175,6 +170,27 @@
       "outcomes": [
         "A11Y-001 passed with residual Scan again",
         "HTTPS closed",
+        "incomplete"
+      ],
+      "new_blockers": [],
+      "unresolved": [
+        "own-server notebook",
+        "PIN storage",
+        "native waivers"
+      ]
+    },
+    {
+      "at": "2026-09-19T19:49:23Z",
+      "user_message_brief": "Re-attached TEST-AUDIT script; run audit after Scan again fix",
+      "actions_taken": [
+        "Re-ran tsc+jest 65",
+        "Secret scan 0",
+        "Pages HTTPS still true",
+        "Confirmed Scan again minHeight 44",
+        "Updated verification + audit doc"
+      ],
+      "outcomes": [
+        "A11Y Scan residual closed",
         "incomplete"
       ],
       "new_blockers": [],

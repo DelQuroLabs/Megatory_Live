@@ -1,27 +1,3 @@
-PASS components __tests__/inventoryA11y.test.tsx
-  ● Console
-
-    console.warn
-      "shadow*" style props are deprecated. Use "boxShadow".
-
-      210 | }
-      211 |
-    > 212 | const styles = StyleSheet.create({
-          |                           ^
-      213 |   container: { flex: 1, backgroundColor: '#F5F8FB' },
-      214 |   topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12, paddingHorizontal: 16 },
-      215 |   pill: { backgroundColor: 'white', borderWidth: 1, borderColor: '#DCE8F0', paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999 },
-
-      at warn (node_modules/react-native-web/dist/cjs/modules/warnOnce/index.js:28:13)
-      at preprocess (node_modules/react-native-web/dist/cjs/exports/StyleSheet/preprocess.js:121:27)
-      at compileAndInsertAtomic (node_modules/react-native-web/dist/cjs/exports/StyleSheet/index.js:60:65)
-      at compileAndInsertAtomic (node_modules/react-native-web/dist/cjs/exports/StyleSheet/index.js:103:26)
-          at Array.forEach (<anonymous>)
-      at Function.forEach [as create] (node_modules/react-native-web/dist/cjs/exports/StyleSheet/index.js:91:23)
-      at Object.create (app/index.tsx:212:27)
-      at Object.require (__tests__/inventoryA11y.test.tsx:29:1)
-
-PASS domain __tests__/inventory.test.ts
 PASS components __tests__/scanScreen.test.tsx
   ● Console
 
@@ -48,13 +24,13 @@ PASS components __tests__/scanScreen.test.tsx
     console.warn
       props.pointerEvents is deprecated. Use style.pointerEvents
 
-      76 |     seed([createEmptyItem({ drugName: 'Alfaxan 10mL', barcode: '10026696', quantityOnHand: 1, unit: 'bottle' })]);
-      77 |     render(<ScanScreen />);
-    > 78 |     fireEvent.click(await screen.findByRole('button', { name: /read barcode now/i }));
+      77 |     seed([createEmptyItem({ drugName: 'Alfaxan 10mL', barcode: '10026696', quantityOnHand: 1, unit: 'bottle' })]);
+      78 |     render(<ScanScreen />);
+    > 79 |     fireEvent.click(await screen.findByRole('button', { name: /read barcode now/i }));
          |               ^
-      79 |     expect(await screen.findByText('Alfaxan 10mL')).toBeTruthy();
-      80 |   });
-      81 |
+      80 |     expect(await screen.findByText('Alfaxan 10mL')).toBeTruthy();
+      81 |   });
+      82 |
 
       at warn (node_modules/react-native-web/dist/cjs/modules/warnOnce/index.js:28:13)
       at createDOMProps (node_modules/react-native-web/dist/cjs/modules/createDOMProps/index.js:809:27)
@@ -76,42 +52,32 @@ PASS components __tests__/scanScreen.test.tsx
       at fireEvent (node_modules/@testing-library/dom/dist/events.js:12:35)
       at Function.fireEvent.<computed> [as click] (node_modules/@testing-library/dom/dist/events.js:110:36)
       at Function.fireEvent.<computed> [as click] (node_modules/@testing-library/react/dist/fire-event.js:15:52)
-      at Object.click (__tests__/scanScreen.test.tsx:78:15)
+      at Object.click (__tests__/scanScreen.test.tsx:79:15)
       at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
       at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
 
-PASS components __tests__/tabDock.test.tsx
+PASS components __tests__/inventoryA11y.test.tsx
   ● Console
 
     console.warn
-      props.pointerEvents is deprecated. Use style.pointerEvents
+      "shadow*" style props are deprecated. Use "boxShadow".
 
-      37 | describe('TabDock', () => {
-      38 |   test('shows the four rooms and hides sitemap leftovers', () => {
-    > 39 |     render(<TabDock {...fakeNav().props} />);
-         |           ^
-      40 |     expect(screen.getByLabelText('Stock tab (selected)')).toBeTruthy();
-      41 |     expect(screen.getByLabelText('Scan tab')).toBeTruthy();
-      42 |     expect(screen.getByLabelText('Add tab')).toBeTruthy();
+      210 | }
+      211 |
+    > 212 | const styles = StyleSheet.create({
+          |                           ^
+      213 |   container: { flex: 1, backgroundColor: '#F5F8FB' },
+      214 |   topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12, paddingHorizontal: 16 },
+      215 |   pill: { backgroundColor: 'white', borderWidth: 1, borderColor: '#DCE8F0', paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999 },
 
       at warn (node_modules/react-native-web/dist/cjs/modules/warnOnce/index.js:28:13)
-      at createDOMProps (node_modules/react-native-web/dist/cjs/modules/createDOMProps/index.js:809:27)
-      at createElement (node_modules/react-native-web/dist/cjs/exports/createElement/index.js:27:45)
-      at node_modules/react-native-web/dist/cjs/exports/View/index.js:116:36
-      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:15486:18)
-      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:19245:20)
-      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:21675:16)
-      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:27465:14)
-      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:26599:12)
-      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:26505:5)
-      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:26473:7)
-      at performConcurrentWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:25777:74)
-      at flushActQueue (node_modules/react/cjs/react.development.js:2667:24)
-      at act (node_modules/react/cjs/react.development.js:2582:11)
-      at node_modules/@testing-library/react/dist/act-compat.js:47:25
-      at renderRoot (node_modules/@testing-library/react/dist/pure.js:180:26)
-      at render (node_modules/@testing-library/react/dist/pure.js:271:10)
-      at Object.<anonymous> (__tests__/tabDock.test.tsx:39:11)
+      at preprocess (node_modules/react-native-web/dist/cjs/exports/StyleSheet/preprocess.js:121:27)
+      at compileAndInsertAtomic (node_modules/react-native-web/dist/cjs/exports/StyleSheet/index.js:60:65)
+      at compileAndInsertAtomic (node_modules/react-native-web/dist/cjs/exports/StyleSheet/index.js:103:26)
+          at Array.forEach (<anonymous>)
+      at Function.forEach [as create] (node_modules/react-native-web/dist/cjs/exports/StyleSheet/index.js:91:23)
+      at Object.create (app/index.tsx:212:27)
+      at Object.require (__tests__/inventoryA11y.test.tsx:29:1)
 
 PASS components __tests__/kioskGate.test.tsx
   ● Console
@@ -136,7 +102,6 @@ PASS components __tests__/kioskGate.test.tsx
       at performWorkUntilDeadline (node_modules/react-dom/node_modules/scheduler/cjs/scheduler.development.js:533:21)
       at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:520:19)
 
-PASS domain __tests__/excel.test.ts
 PASS components __tests__/inventoryScreen.test.tsx
   ● Console
 
@@ -167,26 +132,9 @@ PASS components __tests__/inventoryScreen.test.tsx
           at Generator.next (<anonymous>)
           at asyncGeneratorStep (/home/user/Megatory_Live/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
           at _next (/home/user/Megatory_Live/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
-
-      64 |     return Array.isArray(parsed) ? parsed : [];
-      65 |   } catch (e) {
-    > 66 |     console.warn('Failed to load cached inventory', e);
-         |             ^
-      67 |     return [];
-      68 |   }
-      69 | }
-
-      at warn (lib/storage/inventoryStorage.ts:66:13)
-      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
-      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
-
-    console.warn
-      Failed to load cached inventory SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
-          at JSON.parse (<anonymous>)
-          at parse (/home/user/Megatory_Live/lib/storage/inventoryStorage.ts:63:25)
-          at Generator.next (<anonymous>)
-          at asyncGeneratorStep (/home/user/Megatory_Live/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
-          at _next (/home/user/Megatory_Live/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+          at runNextTicks (node:internal/process/task_queues:64:5)
+          at listOnTimeout (node:internal/timers:547:9)
+          at processTimers (node:internal/timers:521:7)
 
       64 |     return Array.isArray(parsed) ? parsed : [];
       65 |   } catch (e) {
@@ -223,17 +171,72 @@ PASS components __tests__/inventoryScreen.test.tsx
       at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
       at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
 
-PASS domain __tests__/storageMigration.test.ts
-PASS components __tests__/pairdropLink.test.tsx
+    console.warn
+      Failed to load cached inventory SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+          at JSON.parse (<anonymous>)
+          at parse (/home/user/Megatory_Live/lib/storage/inventoryStorage.ts:63:25)
+          at Generator.next (<anonymous>)
+          at asyncGeneratorStep (/home/user/Megatory_Live/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+          at _next (/home/user/Megatory_Live/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+      64 |     return Array.isArray(parsed) ? parsed : [];
+      65 |   } catch (e) {
+    > 66 |     console.warn('Failed to load cached inventory', e);
+         |             ^
+      67 |     return [];
+      68 |   }
+      69 | }
+
+      at warn (lib/storage/inventoryStorage.ts:66:13)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+PASS domain __tests__/excel.test.ts
+PASS components __tests__/tabDock.test.tsx
+  ● Console
+
+    console.warn
+      props.pointerEvents is deprecated. Use style.pointerEvents
+
+      37 | describe('TabDock', () => {
+      38 |   test('shows the four rooms and hides sitemap leftovers', () => {
+    > 39 |     render(<TabDock {...fakeNav().props} />);
+         |           ^
+      40 |     expect(screen.getByLabelText('Stock tab (selected)')).toBeTruthy();
+      41 |     expect(screen.getByLabelText('Scan tab')).toBeTruthy();
+      42 |     expect(screen.getByLabelText('Add tab')).toBeTruthy();
+
+      at warn (node_modules/react-native-web/dist/cjs/modules/warnOnce/index.js:28:13)
+      at createDOMProps (node_modules/react-native-web/dist/cjs/modules/createDOMProps/index.js:809:27)
+      at createElement (node_modules/react-native-web/dist/cjs/exports/createElement/index.js:27:45)
+      at node_modules/react-native-web/dist/cjs/exports/View/index.js:116:36
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:15486:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:19245:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:21675:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:27465:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:26599:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:26505:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:26473:7)
+      at performConcurrentWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:25777:74)
+      at flushActQueue (node_modules/react/cjs/react.development.js:2667:24)
+      at act (node_modules/react/cjs/react.development.js:2582:11)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:180:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:271:10)
+      at Object.<anonymous> (__tests__/tabDock.test.tsx:39:11)
+
 PASS domain __tests__/kiosk.test.ts
+PASS components __tests__/pairdropLink.test.tsx
+PASS domain __tests__/inventory.test.ts
 PASS domain __tests__/backend.test.ts
-PASS domain __tests__/qrAsset.test.ts
+PASS domain __tests__/storageMigration.test.ts
 PASS domain __tests__/pairdrop.test.ts
-PASS domain __tests__/appUrl.test.ts
+PASS domain __tests__/qrAsset.test.ts
 PASS domain __tests__/deps.test.ts
+PASS domain __tests__/appUrl.test.ts
 
 Test Suites: 15 passed, 15 total
 Tests:       65 passed, 65 total
 Snapshots:   0 total
-Time:        4.802 s, estimated 6 s
+Time:        4.631 s, estimated 6 s
 Ran all test suites in 2 projects.
