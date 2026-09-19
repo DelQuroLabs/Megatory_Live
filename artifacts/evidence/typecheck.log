@@ -1,4 +1,1 @@
-START 2026-09-18T00:37:34Z
-$ npx tsc --noEmit
-exit=0
-END 2026-09-18T00:37:37Z
+TSC:0

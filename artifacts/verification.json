@@ -1,336 +1,372 @@
 {
   "schema_version": "1.2.0",
+  "target": "web-companion",
   "phase": "preview",
-  "target": "web-companion (declared alongside iOS and Android in docs/charter.md; native targets are capability-blocked in this sandbox)",
   "hash_exclusions": [
     "node_modules/",
+    ".next/",
     "dist/",
     "build/",
     "out/",
     "coverage/",
     ".cache/",
-    ".expo/",
+    ".pytest_cache/",
+    ".ruff_cache/",
+    ".mypy_cache/",
     "__pycache__/",
     ".venv/",
-    "uploads/",
-    "artifacts/"
+    "target/",
+    ".git/",
+    "Pods/",
+    "android/.gradle/",
+    "android/build/",
+    "ios/build/",
+    "ios/Pods/",
+    ".expo/"
   ],
   "gates": [
     {
       "id": "INSTALL-001",
-      "result": "passed",
-      "command": "npm install --legacy-peer-deps",
+      "command": "npm ls --depth=0 (existing lockfile install; npm ci not re-run this turn)",
       "target": "host",
+      "result": "passed",
       "required_for_phase": true,
+      "redaction": "none",
+      "notes": "node_modules already present from earlier session. npm ls --depth=0 succeeded against package-lock.json. Did not run npm ci this turn (would disrupt the live Metro preview). Lockfile hash recorded.",
+      "started_at": "2026-09-19T18:03:40Z",
+      "finished_at": "2026-09-19T18:03:42Z",
       "evidence": "artifacts/evidence/install.log",
+      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
       "tool_versions": {
         "node": "22.22.3",
-        "npm": "10.9.8"
+        "npm": "10.9.8",
+        "typescript": "5.9.3",
+        "jest": "29.7.0",
+        "expo": "52.0.49"
       },
       "environment": {
-        "os": "linux",
-        "device_or_runner": "sandbox-host (node 22.22.3, 2 CPU, 3.9 GB RAM)"
+        "os": "linux 6.1.158+",
+        "device_or_runner": "sandbox-host"
       },
       "inputs": [
         {
           "path": "package.json",
-          "sha256": "0d96974d0adbb8d3032792189e5efb77122e696952ccd1420afb562618977586"
+          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
         },
         {
           "path": "package-lock.json",
-          "sha256": "d5fbb84e5fa37ed9ed30db38a2b70e9812ce04d50420a7c61f49bbd78e48b4ad"
+          "sha256": "32123e91564c8bf1240e537354e263dd46cd10953a6ac89d54e3c253401a122f"
         }
-      ],
-      "redaction": "none",
-      "notes": "Re-run this session; node_modules had not survived the previous session. CORRECTION: the prior record listed the package.json input sha256 as e3b0c442...f5855, which is the sha256 of the EMPTY string (verified via printf '' | sha256sum), not of the 2307-byte package.json. Tool versions were also recorded as node 22.5.1 / npm 10.8.2; the actual runtime is node 22.22.3 / npm 10.9.8. All values replaced with measurements taken this turn.",
-      "started_at": "2026-09-18T00:39:24Z",
-      "finished_at": "2026-09-18T00:39:27Z",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
+      ]
     },
     {
       "id": "TYPECHECK-001",
-      "result": "passed",
-      "command": "npx tsc --noEmit",
+      "command": "./node_modules/.bin/tsc --noEmit",
       "target": "host",
+      "result": "passed",
       "required_for_phase": true,
+      "redaction": "none",
+      "notes": "exit 0. Used local typescript 5.9.3, not npx tsc (which installs tsc@2.0.4).",
+      "started_at": "2026-09-19T18:04:05Z",
+      "finished_at": "2026-09-19T18:04:10Z",
       "evidence": "artifacts/evidence/typecheck.log",
+      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
       "tool_versions": {
-        "typescript": "5.3.3"
+        "node": "22.22.3",
+        "npm": "10.9.8",
+        "typescript": "5.9.3",
+        "jest": "29.7.0",
+        "expo": "52.0.49"
       },
       "environment": {
-        "os": "linux",
-        "device_or_runner": "sandbox-host (node 22.22.3, 2 CPU, 3.9 GB RAM)"
+        "os": "linux 6.1.158+",
+        "device_or_runner": "sandbox-host"
       },
-      "redaction": "none",
       "inputs": [
         {
-          "path": "app/index.tsx",
-          "sha256": "4a711412659bf0727f20b48c571622a9ecee86c369a11e4abfb1464c3e6c7caf"
+          "path": "tsconfig.json",
+          "sha256": "d3113549ad26b6ac522c3e591babd66f6d6816c76a06fc6e2df42bb1a42e9324"
         },
+        {
+          "path": "package.json",
+          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
+        }
+      ]
+    },
+    {
+      "id": "UNIT-001",
+      "command": "npx jest --selectProjects domain --no-coverage",
+      "target": "host",
+      "result": "passed",
+      "required_for_phase": true,
+      "redaction": "none",
+      "notes": "Full suite 14 projects/files, 62 tests passed (domain + components). Domain files: inventory, excel, backend, kiosk, deps, storageMigration, qrAsset, appUrl, pairdrop.",
+      "started_at": "2026-09-19T18:04:10Z",
+      "finished_at": "2026-09-19T18:04:14Z",
+      "evidence": "artifacts/evidence/jest.log",
+      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "tool_versions": {
+        "node": "22.22.3",
+        "npm": "10.9.8",
+        "typescript": "5.9.3",
+        "jest": "29.7.0",
+        "expo": "52.0.49"
+      },
+      "environment": {
+        "os": "linux 6.1.158+",
+        "device_or_runner": "sandbox-host"
+      },
+      "inputs": [
+        {
+          "path": "jest.config.js",
+          "sha256": "33ea2c68bcd6ee301ebf845c20ee8c84a4a2e165462a4d364d6469500fc0a343"
+        },
+        {
+          "path": "package.json",
+          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
+        }
+      ]
+    },
+    {
+      "id": "COMPONENT-001",
+      "command": "npx jest --selectProjects components --no-coverage",
+      "target": "web",
+      "result": "passed",
+      "required_for_phase": true,
+      "redaction": "none",
+      "notes": "jsdom + react-native-web. inventoryScreen, inventoryA11y, scanScreen, kioskGate, pairdropLink. target: web \u2014 not native. Add and Files screens still have no rendered component tests.",
+      "started_at": "2026-09-19T18:04:10Z",
+      "finished_at": "2026-09-19T18:04:14Z",
+      "evidence": "artifacts/evidence/jest.log",
+      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "tool_versions": {
+        "node": "22.22.3",
+        "npm": "10.9.8",
+        "typescript": "5.9.3",
+        "jest": "29.7.0",
+        "expo": "52.0.49"
+      },
+      "environment": {
+        "os": "linux 6.1.158+",
+        "device_or_runner": "sandbox-host"
+      },
+      "inputs": [
         {
           "path": "jest.config.js",
           "sha256": "33ea2c68bcd6ee301ebf845c20ee8c84a4a2e165462a4d364d6469500fc0a343"
         }
-      ],
-      "notes": "Exit 0, no type errors. Caught and forced the fix of accessibilityRole=\"group\", which is not a member of RN 0.76 AccessibilityRole.",
-      "started_at": "2026-09-18T00:37:34Z",
-      "finished_at": "2026-09-18T00:37:37Z",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
-    },
-    {
-      "id": "UNIT-001",
-      "result": "passed",
-      "command": "npx jest --selectProjects domain --verbose --silent",
-      "target": "host",
-      "required_for_phase": true,
-      "evidence": "artifacts/evidence/unit.log",
-      "tool_versions": {
-        "jest": "29.7.0"
-      },
-      "environment": {
-        "os": "linux",
-        "device_or_runner": "sandbox-host (node 22.22.3, 2 CPU, 3.9 GB RAM)"
-      },
-      "redaction": "none",
-      "inputs": [
-        {
-          "path": "lib/domain/inventory.ts",
-          "sha256": "876e4f0f880825a2501464eb779d5999a140c21324972255b0e0eec6f42a32ec"
-        },
-        {
-          "path": "__tests__/inventory.test.ts",
-          "sha256": "09a01731a0c80e1ae5f704cc481cf4cb5fa6442eba8cd235051531ab86a03e1c"
-        },
-        {
-          "path": "__tests__/deps.test.ts",
-          "sha256": "c80ec023d59c6643e505fe747e29f2e45f53daaa26a0a202324ce2cea8d04132"
-        }
-      ],
-      "notes": "12 tests passed. CORRECTION: the prior record said \"6 tests\" and named only 6; the suite already contained 8 (matchToTemplate and the name-only merge case were added after the evidence was written - a green result from an earlier revision is not a current pass). 2 Excel serialization/import round-trip tests were added after the earlier record.",
-      "started_at": "2026-09-18T00:43:43Z",
-      "finished_at": "2026-09-18T00:43:43Z",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
-    },
-    {
-      "id": "COMPONENT-001",
-      "result": "passed",
-      "command": "npx jest --selectProjects components --verbose --silent",
-      "target": "web",
-      "required_for_phase": true,
-      "evidence": "artifacts/evidence/component.log",
-      "tool_versions": {
-        "jest": "29.7.0",
-        "react-native-web": "0.19.13",
-        "@testing-library/react": "14.3.1"
-      },
-      "environment": {
-        "os": "linux",
-        "device_or_runner": "jsdom (react-native-web renderer)"
-      },
-      "redaction": "none",
-      "inputs": [
-        {
-          "path": "app/index.tsx",
-          "sha256": "4a711412659bf0727f20b48c571622a9ecee86c369a11e4abfb1464c3e6c7caf"
-        },
-        {
-          "path": "__tests__/inventoryScreen.test.tsx",
-          "sha256": "c2e73453b837d4ca787b5d161041c95966f731aaaaa7c8ddbfcfb5cf1d439d33"
-        },
-        {
-          "path": "__tests__/inventoryA11y.test.tsx",
-          "sha256": "00616ec378f09220469661b998a98d41d3b36ddb3c46071a546079e128c2004b"
-        }
-      ],
-      "notes": "12 tests passed rendering the real app/index.tsx. CORRECTION: the prior record claimed COMPONENT-001 passed with command \"npx jest --no-coverage\" and the note \"Component tests same as unit for preview phase\" - i.e. no component was ever rendered. It now renders the actual screen in jsdom via react-native-web and asserts empty state, item rendering, search-by-name, search-by-barcode, the +1 addQty route, and corrupt-storage resilience. The full jest-expo native preset could not be used here: it is OOM-killed on this 3.9 GB host (observed \"FATAL ERROR: Ineffective mark-compacts near heap limit\" and a kernel \"Killed\"), so the web renderer is used and labelled target: web.",
-      "started_at": "2026-09-18T00:43:43Z",
-      "finished_at": "2026-09-18T00:43:46Z",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
+      ]
     },
     {
       "id": "A11Y-001",
-      "result": "passed",
-      "command": "npx jest --selectProjects components __tests__/inventoryA11y.test.tsx --verbose --silent",
+      "command": "npx jest __tests__/inventoryA11y.test.tsx plus source inspection of hit-target padding",
       "target": "web",
+      "result": "failed",
       "required_for_phase": true,
-      "evidence": "artifacts/evidence/a11y.log",
+      "redaction": "none",
+      "notes": "Automated accessible-name tests still pass (6/6 on Stock). All four screens and TabDock/KioskGate/PairDropLink now set accessibilityLabel on interactive controls. FAILED \u00a75.3 hit-target bar: chips, filter pills, Lock pill, and +1/Edit bubbles use paddingVertical 6\u20138 (~28\u201336 px), below 44pt. Native VoiceOver/TalkBack not run. Web-only.",
+      "started_at": "2026-09-19T18:02:00Z",
+      "finished_at": "2026-09-19T18:04:14Z",
+      "evidence": "artifacts/evidence/jest.log",
+      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
       "tool_versions": {
+        "node": "22.22.3",
+        "npm": "10.9.8",
+        "typescript": "5.9.3",
         "jest": "29.7.0",
-        "@testing-library/react": "14.3.1"
+        "expo": "52.0.49"
       },
       "environment": {
-        "os": "linux",
-        "device_or_runner": "jsdom; accessible-name computation via @testing-library/dom"
+        "os": "linux 6.1.158+",
+        "device_or_runner": "sandbox-host"
       },
-      "redaction": "none",
-      "inputs": [
-        {
-          "path": "app/index.tsx",
-          "sha256": "4a711412659bf0727f20b48c571622a9ecee86c369a11e4abfb1464c3e6c7caf"
-        },
-        {
-          "path": "__tests__/inventoryA11y.test.tsx",
-          "sha256": "00616ec378f09220469661b998a98d41d3b36ddb3c46071a546079e128c2004b"
-        }
-      ],
-      "notes": "Automated minimum satisfied: 6 executable assertions. CORRECTION: the prior record claimed passed with tool \"manual\" and the note \"All interactive controls have accessible labels\". That was false - grep found ZERO accessibility* or aria-* props across all four screens (37 TouchableOpacity controls). Fixed on the inventory screen (add-one / edit / delete / search / location chips / empty-state buttons) and now asserted automatically, including a check that no control is nested inside another. add.tsx, scan.tsx and import-export.tsx are still unlabelled - recorded as open item oi-002. Native VoiceOver/TalkBack NOT exercised (no device in sandbox).",
-      "started_at": "2026-09-18T00:43:46Z",
-      "finished_at": "2026-09-18T00:43:49Z",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d"
-    },
-    {
-      "id": "SMOKE-001",
-      "result": "passed",
-      "command": "npx expo start --web --offline --port 8081",
-      "target": "web",
-      "required_for_phase": true,
-      "started_at": "2026-09-18T00:38:45Z",
-      "finished_at": "2026-09-18T00:38:46Z",
-      "evidence": "artifacts/evidence/smoke.log",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
-      "tool_versions": {
-        "expo": "52.0.46",
-        "node": "22.22.3"
-      },
-      "environment": {
-        "os": "linux",
-        "device_or_runner": "dev server on 0.0.0.0:8081, verified by curl"
-      },
-      "redaction": "none",
-      "notes": "Web companion: GET / -> 200; expo-router entry bundle -> 200, 5,283,161 bytes, 0 unresolved modules; app storage key, TEMPLATE_COLUMNS and new a11y labels present in the served bundle. CORRECTION: the previously recorded command \"expo start --web --port 8081\" does not work in this sandbox - it exits 1 with \"TypeError: fetch failed\" in getNativeModuleVersionsAsync against https://api.expo.dev/v2/ (curl to that host returns exit 35 / SSL_ERROR_SYSCALL / status 000). --offline is mandatory here; the recorded command was not reproducible."
-    },
-    {
-      "id": "SMOKE-001",
-      "result": "blocked",
-      "target": "ios-android-native",
-      "required_for_phase": true,
-      "reason": "No iOS simulator, Android emulator, or physical device is available in this sandbox (artifacts/capabilities.json devices: [\"web-companion\"]). Per the native-target rule, web preview evidence is labelled target: web and is never evidence of native behaviour."
-    },
-    {
-      "id": "VISUAL-001",
-      "result": "blocked",
-      "target": "web-and-native",
-      "required_for_phase": true,
-      "reason": "No visual-verification capability in this sandbox: google-chrome, chromium, chromium-browser and firefox are all absent from PATH, and no Playwright or Puppeteer browser caches exist. CORRECTION: the prior record claimed passed with tool \"manual\" and the note \"Verified layout reflows, teal theme consistent, no clipping\" - no such check was reproducible and no artifact existed. Required for the preview phase, so it needs an active scoped waiver before any phase-complete-with-waiver label."
-    },
-    {
-      "id": "BUILD-001",
-      "result": "passed",
-      "command": "npx expo export --platform web",
-      "target": "web",
-      "required_for_phase": false,
-      "started_at": "2026-09-18T00:42:19Z",
-      "finished_at": "2026-09-18T00:42:24Z",
-      "evidence": "artifacts/evidence/build-web.log",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
-      "tool_versions": {
-        "expo": "52.0.46",
-        "metro": "0.81.x"
-      },
-      "environment": {
-        "os": "linux",
-        "device_or_runner": "static export to dist/"
-      },
-      "redaction": "none",
       "inputs": [
         {
           "path": "package.json",
-          "sha256": "0d96974d0adbb8d3032792189e5efb77122e696952ccd1420afb562618977586"
+          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
         }
-      ],
-      "notes": "Exit 0. 6 static routes exported (/, /add, /scan, /import-export, /_sitemap, /+not-found) plus a 1.50 MB web bundle. CORRECTION - the prior record claimed BUILD-001 web \"passed\" for this exact command, but it FAILED on current inputs: \"Metro error: o.stringify is not a function\" / \"Failed to statically export route: +not-found\", exit 1, empty dist/. Root cause: package.json pinned query-string ^9.5.1, which is ESM-only (\"type\":\"module\"), while expo-router 4.0.22 does require(\"query-string\") as an UNDECLARED (phantom) dependency and nothing else in the tree declares it (verified: npm ls query-string --all shows only our own root). Pinned to ^7.1.3 (CommonJS, exposes .stringify); export then succeeded. The vulnerable direct xlsx package was subsequently replaced with @e965/xlsx@0.20.3, and the export was rerun successfully. Guarded by 2 new tests in __tests__/deps.test.ts, proven non-vacuous by re-installing 9.5.1 with --no-save and observing both fail."
+      ]
+    },
+    {
+      "id": "SMOKE-001",
+      "command": "curl -sS http://127.0.0.1:8081/",
+      "target": "web",
+      "result": "passed",
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "Metro web preview HTTP 200, 31286 bytes HTML. / and /import-export both 200 (SPA). PairDrop is client-rendered so the HTML shell does not contain the string pairdrop. Live GitHub Pages run 35458369895 success for f0ae808.",
+      "started_at": "2026-09-19T18:03:20Z",
+      "finished_at": "2026-09-19T18:03:22Z",
+      "evidence": "artifacts/evidence/smoke-web.log",
+      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "tool_versions": {
+        "node": "22.22.3",
+        "npm": "10.9.8",
+        "typescript": "5.9.3",
+        "jest": "29.7.0",
+        "expo": "52.0.49"
+      },
+      "environment": {
+        "os": "linux 6.1.158+",
+        "device_or_runner": "sandbox-host"
+      },
+      "inputs": [
+        {
+          "path": "package.json",
+          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
+        }
+      ]
+    },
+    {
+      "id": "SMOKE-001",
+      "command": "native launch",
+      "target": "ios+android",
+      "result": "blocked",
+      "required_for_phase": true,
+      "redaction": "none",
+      "notes": "",
+      "reason": "No iOS simulator, Android emulator, or physical device in this sandbox. Web smoke is a separate target:web gate and is not native evidence."
+    },
+    {
+      "id": "VISUAL-001",
+      "command": "light/dark/font-scale/zoom matrix",
+      "target": "web",
+      "result": "blocked",
+      "required_for_phase": true,
+      "redaction": "none",
+      "notes": "",
+      "reason": "No headless browser (chrome/chromium/firefox/playwright/puppeteer all absent). Source-only design notes are in docs/audit-2026-09-19.md and are not a visual pass."
     },
     {
       "id": "BUILD-001",
-      "result": "blocked",
-      "target": "ios-android-native",
+      "command": "npx expo export --platform web",
+      "target": "web",
+      "result": "not-run",
       "required_for_phase": false,
-      "reason": "Native builds require EAS Build plus Apple/Google store accounts, which are not available in this sandbox and are Class D spend requiring explicit authorization. Optional at the preview phase."
+      "redaction": "none",
+      "notes": "Optional at preview. Not re-exported this turn. Pages workflow 35458369895 already exported f0ae808 successfully (external CI, not this host)."
+    },
+    {
+      "id": "BUILD-001",
+      "command": "eas build",
+      "target": "ios+android",
+      "result": "blocked",
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "",
+      "reason": "No EAS credentials, store accounts, or native toolchain in this sandbox."
     },
     {
       "id": "E2E-001",
+      "command": "maestro / device flow",
+      "target": "ios+android",
       "result": "blocked",
-      "target": "ios-android-native",
       "required_for_phase": false,
-      "reason": "End-to-end verification of the accepted outcome (physical bottle -> camera barcode scan -> add quantity -> export -> second phone import -> merge -> final export) requires a real device with a camera. None available. Optional at the preview phase; becomes required at production-candidate. The prior record marked this blocked but its note said \"Web E2E via manual flow verified\" with no artifact - that claim is withdrawn."
+      "redaction": "none",
+      "notes": "",
+      "reason": "No device or Maestro. Camera barcode path and multi-phone notebook cannot be exercised here."
     },
     {
       "id": "PERF-001",
-      "result": "passed",
-      "command": "curl -w %{time_total} against the running dev server entry bundle (3 runs); npx expo export --platform web for the production bundle time",
+      "command": "cold-start timing",
       "target": "web",
+      "result": "not-run",
       "required_for_phase": false,
-      "started_at": "2026-09-18T00:44:10Z",
-      "finished_at": "2026-09-18T00:44:11Z",
-      "evidence": "artifacts/evidence/perf.log",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
-      "tool_versions": {
-        "node": "22.22.3",
-        "curl": "system",
-        "expo": "52.0.46"
-      },
-      "environment": {
-        "os": "linux",
-        "device_or_runner": "dev server on 0.0.0.0:8081"
-      },
       "redaction": "none",
-      "notes": "Measured: dev-server entry bundle 0.249s / 0.108s / 0.069s over 3 runs (HTTP 200, 5,274,380 bytes); production web bundle 2074ms for 664 modules. RETRACTION: the prior record claimed passed with \"Cold start <2s ... list with 1000 items still smooth (FlatList)\" and tool \"manual\". No cold-start or 1000-item measurement was ever taken; both claims are withdrawn and replaced by the figures above. Optional at the preview phase. No native device timing is claimed."
+      "notes": "Optional at preview. Not re-measured this turn. Prior unmeasured <2s claim stays retracted."
     },
     {
       "id": "SEC-001",
+      "command": "grep secret patterns + npm audit --json",
+      "target": "host",
       "result": "passed",
-      "command": "grep -rInE for credential patterns across app/ lib/ __tests__/*.json config; pattern scan of the 5,283,161-byte served client bundle; ls for .env/.pem/.key/.p12/.keystore",
-      "target": "host-and-web-bundle",
       "required_for_phase": true,
-      "started_at": "2026-09-18T00:38:45Z",
-      "finished_at": "2026-09-18T00:38:46Z",
-      "evidence": "artifacts/evidence/sec.log",
-      "source_revision": "workspace-sha256:9e4d0d7764f2e5827c5b2d7542963fc07ed4594cf5405524bf12b9d1889ba04d",
+      "redaction": "none",
+      "notes": "Source secret scan: 0 hits; no .env/.pem/.keystore. npm audit: 27 advisories (15 moderate / 11 high / 1 critical) in Expo tooling \u2014 not triaged, recorded as finding F-SEC-ADVISORIES. Preview SEC-001 is secret+bundle scan, not advisory triage. Threat model in security.json was stale (claimed no network); product now uses public MQTT brokers. PIN stored in AsyncStorage. See audit findings.",
+      "started_at": "2026-09-19T18:02:30Z",
+      "finished_at": "2026-09-19T18:04:14Z",
+      "evidence": "artifacts/evidence/sec-scan.log",
+      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
       "tool_versions": {
-        "grep": "GNU grep",
-        "node": "22.22.3"
+        "node": "22.22.3",
+        "npm": "10.9.8",
+        "typescript": "5.9.3",
+        "jest": "29.7.0",
+        "expo": "52.0.49"
       },
       "environment": {
-        "os": "linux",
-        "device_or_runner": "sandbox host + served client bundle"
+        "os": "linux 6.1.158+",
+        "device_or_runner": "sandbox-host"
       },
-      "redaction": "none",
-      "notes": "Automated this turn rather than asserted manually. Source scan for api_key/secret/password/token/PEM headers/AKIA*/ghp_*/xox*/sk-*: 0 hits. No .env, .pem, .key, .p12 or .keystore files present. Client-bundle scan for AKIA*/ghp_*/xox*/PEM/sk-*: 0 hits each. The 2 http://localhost occurrences in the bundle are inside Expo SDK dev-only stack-trace-parsing code (a comment and frame parsing), not app network calls, so the browser-facing code makes no localhost calls. Permissions: CAMERA only. Local-only storage, no network, no telemetry, no PII. Dependency advisory scan (npm audit) reports 26 vulnerabilities (13 moderate, 12 high, 1 critical) - NOT triaged this turn; that triage is required for production-candidate and is recorded as open item oi-003."
+      "inputs": [
+        {
+          "path": "package.json",
+          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
+        }
+      ]
     },
     {
       "id": "DOCTOR-001",
+      "command": "npx expo-doctor",
+      "target": "host",
       "result": "not-run",
-      "reason": "Optional at the preview phase. expo-doctor requires api.expo.dev, which is unreachable from this sandbox (SSL_ERROR_SYSCALL / status 000). Not run."
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "api.expo.dev previously unreachable; not attempted this turn."
     },
     {
       "id": "LINT-001",
+      "command": "npm run lint",
+      "target": "host",
       "result": "not-run",
-      "reason": "Optional at the preview phase. No ESLint configuration exists in the repo (no .eslintrc*, and the prior \"lint\" script fell back to echo). Not run."
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "eslint not configured as a real project lint (script echoes 'lint not configured')."
     },
     {
       "id": "CAPSULE-001",
+      "command": "pack/verify capsule",
+      "target": "host",
       "result": "not-run",
-      "reason": "Optional at the preview phase; required before any handoff at production-candidate. No capsule requested. Not run."
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": ""
     },
     {
       "id": "STORE-001",
+      "target": "host",
       "result": "not-applicable",
-      "reason": "Distribution intent is local-preview / internal only. No store submission has been authorized and no store account exists (artifacts/capabilities.json store_account: \"not-applicable\"). Recorded in the gate per G-03, not in an artifact."
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "",
+      "reason": "publishing_intent is not public-store. GitHub Pages web companion only."
     },
     {
       "id": "AGT-001",
+      "target": "host",
       "result": "not-applicable",
-      "reason": "The accepted core outcome is a barcode-driven veterinary inventory counter. It does not include autonomous code generation or execution and uses no model API, so the AGT gate set does not apply."
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "",
+      "reason": "Product core outcome is veterinary inventory counting, not autonomous code execution."
     },
     {
       "id": "AGT-002",
+      "target": "host",
       "result": "not-applicable",
-      "reason": "The accepted core outcome is a barcode-driven veterinary inventory counter. It does not include autonomous code generation or execution and uses no model API, so the AGT gate set does not apply."
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "",
+      "reason": "Not an autonomous-agent product."
     },
     {
       "id": "AGT-003",
+      "target": "host",
       "result": "not-applicable",
-      "reason": "The accepted core outcome is a barcode-driven veterinary inventory counter. It does not include autonomous code generation or execution and uses no model API, so the AGT gate set does not apply."
+      "required_for_phase": false,
+      "redaction": "none",
+      "notes": "",
+      "reason": "No model APIs in the product."
     }
   ]
 }

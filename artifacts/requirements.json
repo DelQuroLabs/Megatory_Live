@@ -6,77 +6,84 @@
       "text": "User can scan medication bottle barcode using phone camera",
       "status": "in-progress",
       "gate": "SMOKE-001",
-      "notes": "scan.tsx implemented, but the camera path can only be exercised on a real device. Native SMOKE-001 is capability-blocked here."
+      "notes": "scan.tsx + WebBarcodeCamera implemented; scanScreen tests cover decode-to-match. Native camera SMOKE remains blocked in this sandbox."
     },
     {
       "id": "REQ-002",
       "text": "Scanned barcode auto-populates drug details if found in local inventory or previous import",
       "status": "done",
       "gate": "UNIT-001",
-      "notes": "matchToTemplate aligns counted items to the template by name - asserted by UNIT-001 this turn."
+      "notes": "findItemByBarcode / barcodesMatch asserted. scanScreen component test: known barcode shows Alfaxan."
     },
     {
       "id": "REQ-003",
       "text": "If barcode not found, prompt manual entry with barcode pre-filled",
       "status": "in-progress",
       "gate": "SMOKE-001",
-      "notes": "Routing exists but the barcode-prefilled manual-entry path has no component test yet."
+      "notes": "Routing exists; no component test renders Add with barcode param."
     },
     {
       "id": "REQ-004",
-      "text": "Manual entry form for all veterinary drug fields (name, generic, manufacturer, concentration, form, size, category, location, expiration, lot, controlled, unit)",
+      "text": "Manual entry form for veterinary and hospital-sheet fields (name, manufacturer number, SVP GL, pack type/units, COUNT, LOG #1)",
       "status": "in-progress",
       "gate": "COMPONENT-001",
-      "notes": "add.tsx implements the full field set and typechecks, but no component test renders it yet (oi-002 also covers its missing a11y labels)."
+      "notes": "add.tsx implements the field set and typechecks. Still no rendered component test for Add."
     },
     {
       "id": "REQ-005",
       "text": "Quantity on hand entry adds to count (add mode) with option to set/override",
       "status": "done",
       "gate": "UNIT-001",
-      "notes": "mergeInventories \"add\" strategy sums quantities instead of replacing (UNIT-001), and the +1 control routes to /add with mode=addQty (COMPONENT-001)."
+      "notes": "mergeInventories add strategy and Stock +1 control."
     },
     {
       "id": "REQ-006",
-      "text": "Inventory list with search/filter by name/barcode/location and shows current counts",
+      "text": "Inventory list with search/filter and current counts",
       "status": "done",
-      "gate": "SMOKE-001",
-      "notes": "Now genuinely asserted at the component level: items render with their quantity, search narrows by drug name, and search by barcode works. Location-filter chips render and are labelled, but filtering by location is not yet asserted."
+      "gate": "COMPONENT-001",
+      "notes": "Search and chips labelled; location filter chips render."
     },
     {
       "id": "REQ-007",
-      "text": "Excel import: parse template file and load into app",
-      "status": "in-progress",
+      "text": "Excel import: parse Q3-2026 hospital file (and legacy Inventory Count / SKU files) into the app",
+      "status": "done",
       "gate": "UNIT-001",
-      "notes": "lib/storage/excel.ts parse path has no test coverage."
+      "notes": "excel.test.ts covers three header rows, COUNT + LOG #1, and legacy SKU import."
     },
     {
       "id": "REQ-008",
-      "text": "Excel export: generate file with columns in exact template order, only qty intended for edit",
-      "status": "in-progress",
+      "text": "Excel export: three hospital tabs, INVENTORY SHEET headers including PACK UNITS and LOG #1, filename MEGATORY_<code>_3Q2026.xlsx",
+      "status": "done",
       "gate": "UNIT-001",
-      "notes": "TEMPLATE_COLUMNS order and itemToTemplateRow are unit-tested, but the actual xlsx serialization and the Instructions sheet are untested, and oi-001 (exact master columns) is still open."
+      "notes": "excel.test.ts. Original priced catalog workbook was not attached; layout taken from prior download.aspx mapping."
     },
     {
       "id": "REQ-009",
-      "text": "Multi-phone compile: import multiple exported files and merge (add quantities for existing, add new items)",
-      "status": "done",
-      "gate": "UNIT-001",
-      "notes": "mergeInventories add/replace plus name-only matching are all asserted by UNIT-001."
+      "text": "Multi-clock compile: same hospital notebook (PIN) so COUNT is shared; Excel merge still available",
+      "status": "in-progress",
+      "gate": "E2E-001",
+      "notes": "Kiosk + MQTT notebook implemented; kioskGate test mocks the notebook. Live two-phone E2E blocked. Last-write-wins, not CRDT. User asked for own-server storage — public MQTT is a stand-in, not that server."
     },
     {
       "id": "REQ-010",
-      "text": "Offline-first: all counting works without network",
+      "text": "Counting works when the notebook host is unreachable, with an honest fallback",
       "status": "done",
       "gate": "SMOKE-001",
-      "notes": "SMOKE-001 web: the dev server starts with --offline (networking disabled), storage is AsyncStorage-only, and SEC-001 confirms no network calls in the bundle. Web target only."
+      "notes": "Register offers Continue on this clock only after a failed notebook open. Not a claim of native offline camera."
     },
     {
       "id": "REQ-011",
-      "text": "Final export ready to copy into protected master template",
+      "text": "Final export ready to turn in as the hospital MEGATORY file",
       "status": "in-progress",
       "gate": "E2E-001",
-      "notes": "Blocked by oi-001 - the protected master column order is still unconfirmed, so \"ready to copy in\" cannot be claimed."
+      "notes": "Layout tests pass. Human still needs to paste/compare against MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx."
+    },
+    {
+      "id": "REQ-012",
+      "text": "Files tells the truth: Megatory has no mailbox; PairDrop is an external new-window link",
+      "status": "done",
+      "gate": "COMPONENT-001",
+      "notes": "Copy in import-export.tsx; PairDropLink is <a target=_blank>. pairdrop + pairdropLink tests added this audit."
     }
   ]
 }

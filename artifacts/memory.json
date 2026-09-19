@@ -1,280 +1,77 @@
 {
   "schema_version": "1.2.0",
-  "project_slug": "vet-inventory-scanner",
+  "project_slug": "megatory-live",
   "current_phase": "preview",
   "current_completion_label": "incomplete",
-  "accepted_core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into locked template format, allow quantity-on-hand entry that adds to count, support manual entry for unscannable items, and compile multi-phone counts via Excel import/export for final inventory",
-  "last_turn_summary": "Session resumed after the prior chat was corrupted; only artifacts/memory.json survived, node_modules had to be reinstalled. Re-ran every preview gate against current inputs and found the previous verification records materially over-claimed. Fixed four real defects: (1) COMPONENT-001 had never rendered a component - added a jest-expo-free jsdom + react-native-web suite that renders the real app/index.tsx (6 tests); (2) A11Y-001 claimed \"all interactive controls have accessible labels\" while grep found ZERO accessibility props across all four screens (37 TouchableOpacity controls) - labelled the inventory screen and added 6 automated a11y assertions; (3) BUILD-001 web was recorded passed but `expo export --platform web` actually failed with \"o.stringify is not a function\" because package.json pinned ESM-only query-string ^9.5.1 while expo-router 4.0.22 require()s it as an undeclared phantom dependency - pinned ^7.1.3 and the export now succeeds (6 routes), guarded by 2 new tests proven non-vacuous; (4) INSTALL-001 recorded the sha256 of the EMPTY STRING as the package.json input hash. Also corrected SMOKE-001 (its recorded command cannot run here without --offline), retracted the unmeasured PERF-001 \"cold start <2s\" claim, re-ran SEC-001 as a real automated scan, and fixed an untracked .gitignore that would have committed node_modules. Result: typecheck clean, 24 tests pass in 5 suites, web export succeeds, preview live on 0.0.0.0:8081.",
+  "accepted_core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into the Q3-2026 hospital Excel, enter quantity that adds to COUNT, support manual entry, and share one hospital notebook across clocks then export MEGATORY_<code>_3Q2026.xlsx",
+  "last_turn_summary": "Independent test/audit of HEAD f0ae808. The uploaded TEST-AUDIT script file was not on disk; ran Build-script gates plus screen/security/design review. tsc clean; 62 tests pass (added PairDrop URL + <a target=_blank> tests). A11Y-001 failed on hit targets (chips/pills/+1 paddingVertical 6–8). Native smoke/visual still blocked. Security records were lying (claimed no network); product uses public MQTT + PIN in AsyncStorage. Pages run 35458369895 success; https_enforced still false. Completion remains incomplete. No self-waiver.",
   "next_actions": [
-    {
-      "id": "na-005",
-      "action": "User to review the live web preview and confirm the 16 protected master columns match their protected master (still the product-level blocker)"
-    },
-    {
-      "id": "na-006",
-      "action": "If the original workbook differs from the supplied image, update TEMPLATE_COLUMNS in lib/domain/inventory.ts and rerun export tests",
-      "depends_on": [
-        "na-005"
-      ]
-    },
-    {
-      "id": "na-009",
-      "action": "Triage the 27 npm audit advisories (14 moderate / 12 high / 1 critical) and record the result - required for SEC-001 at production-candidate"
-    },
-    {
-      "id": "na-010",
-      "action": "User to approve or decline scoped waivers for the two capability-blocked required gates (native SMOKE-001, VISUAL-001) so the phase can be labelled phase-complete-with-waiver instead of incomplete",
-      "gate": "SMOKE-001, VISUAL-001"
-    },
-    {
-      "id": "na-007",
-      "action": "Build native binaries via EAS when ready for production-candidate (Class D - needs explicit cost/scope authorization)"
-    }
+    {"id": "na-https", "action": "Human: enable GitHub Pages HTTPS-only for megatory-live.delqurolabs.app"},
+    {"id": "na-server", "action": "Replace public MQTT notebook with the project's own server storage (user standing instruction)"},
+    {"id": "na-pin", "action": "Stop storing the site PIN in AsyncStorage; use Keychain/Keystore"},
+    {"id": "na-a11y-hits", "action": "Enlarge Stock/Add chips, Lock pill, and +1/Edit bubbles to >= 44pt", "gate": "A11Y-001"},
+    {"id": "na-waiver", "action": "Human approving_actor for native SMOKE-001 and VISUAL-001 waivers — agent cannot self-approve", "gate": "SMOKE-001, VISUAL-001"},
+    {"id": "na-excel-human", "action": "Human compare export against MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx"},
+    {"id": "na-audit-advisories", "action": "Triage npm audit 27 findings before production-candidate", "gate": "SEC-001"}
   ],
   "open_items": [
-    {
-      "id": "oi-001",
-      "summary": "Confirm exact protected master headers (now supplied as an image)",
-      "opened_at": "2026-09-17T00:00:00Z",
-      "notes": "Current template uses 16 columns with Qty as the only editable concept. Needs the user's file to map 1:1. Unchanged from last session."
-    },
-    {
-      "id": "oi-002",
-      "summary": "Accessibility labels added to add.tsx, scan.tsx and import-export.tsx; automated coverage remains limited to index.tsx",
-      "opened_at": "2026-09-18T00:46:00Z",
-      "notes": "All four primary screens now provide labels for their interactive controls. The inventory screen has automated a11y tests; the other three screens still need rendered component tests."
-    },
-    {
-      "id": "oi-003",
-      "summary": "npm audit advisories not triaged",
-      "opened_at": "2026-09-18T00:46:00Z",
-      "notes": "27 vulnerabilities (15 moderate, 11 high, 1 critical) remain, primarily in Expo/React Native tooling. The direct vulnerable xlsx dependency was removed and replaced with @e965/xlsx; remaining advisories need compatibility-aware triage before production-candidate."
-    },
-    {
-      "id": "oi-004",
-      "summary": "scripts/spec_lint.py from the spec package is missing",
-      "opened_at": "2026-09-18T00:46:00Z",
-      "notes": "uploads/ contains only the Master .md; no Compact Edition, schemas generator, spec_lint.py or PACKAGE-MANIFEST.json. Added scripts/validate_records.cjs to validate records against the schemas that ARE present (all 6 valid)."
-    }
+    {"id": "oi-mqtt-vs-server", "summary": "Notebook is public MQTT, not own-server storage", "opened_at": "2026-09-19T18:04:14Z", "notes": "User reversed local-only on 2026-09-19. Current stand-in is encrypted retain on emqx/hivemq/mosquitto."},
+    {"id": "oi-hit-targets", "summary": "Interactive chips/pills/+1 below 44pt", "opened_at": "2026-09-19T18:04:14Z", "notes": "Cause of A11Y-001 failed this audit."},
+    {"id": "oi-003", "summary": "npm audit advisories not triaged", "opened_at": "2026-09-18T00:46:00Z", "notes": "27 vulnerabilities (15 moderate, 11 high, 1 critical)."},
+    {"id": "oi-pages-https", "summary": "Pages https_enforced=false", "opened_at": "2026-09-19T18:04:14Z", "notes": "Human GitHub setting. Certificate already approved through 2026-12-18."}
   ],
   "blockers": [
-    {
-      "id": "b-001",
-      "summary": "Native iOS/Android build and smoke require EAS, store accounts and a device - none available in this sandbox",
-      "category": "capability-missing",
-      "related_gate": "BUILD-001, SMOKE-001, E2E-001",
-      "since": "2026-09-17T21:50:00Z"
-    },
-    {
-      "id": "b-002",
-      "summary": "VISUAL-001 (required at preview) cannot run: no headless browser in the sandbox (google-chrome, chromium, chromium-browser, firefox all absent; no Playwright/Puppeteer cache)",
-      "category": "capability-missing",
-      "related_gate": "VISUAL-001",
-      "since": "2026-09-18T00:46:00Z"
-    },
-    {
-      "id": "b-003",
-      "summary": "Waivers for the two capability-blocked required gates need an approving_actor - that must be the user, so the phase cannot be labelled phase-complete-with-waiver yet",
-      "category": "waiting-for-user",
-      "related_gate": "SMOKE-001, VISUAL-001",
-      "since": "2026-09-18T00:46:00Z"
-    },
-    {
-      "id": "b-004",
-      "summary": "api.expo.dev is unreachable (SSL_ERROR_SYSCALL, http 000), so every expo command needs --offline and expo-doctor cannot run",
-      "category": "capability-missing",
-      "related_gate": "DOCTOR-001",
-      "since": "2026-09-18T00:46:00Z"
-    }
+    {"id": "b-001", "summary": "Native iOS/Android smoke/build/e2e need a device or EAS", "category": "capability-missing", "related_gate": "SMOKE-001", "since": "2026-09-17T21:50:00Z"},
+    {"id": "b-002", "summary": "VISUAL-001 needs a headless browser", "category": "capability-missing", "related_gate": "VISUAL-001", "since": "2026-09-18T00:46:00Z"},
+    {"id": "b-003", "summary": "Waivers need a human approving_actor", "category": "waiting-for-user", "related_gate": "SMOKE-001", "since": "2026-09-18T00:46:00Z"},
+    {"id": "b-https", "summary": "Pages HTTPS-enforce is a human GitHub setting", "category": "waiting-for-user", "related_gate": "SEC-001", "since": "2026-09-19T18:04:14Z"}
   ],
   "pending_user_questions": [
-    {
-      "id": "pq-001",
-      "asked_at": "2026-09-18T00:46:00Z",
-      "question": "If available, can you share the original workbook to verify formatting, hidden columns, and formulas beyond the supplied image?",
-      "context": "Open since 2026-09-17 as oi-001. Everything downstream of the export format depends on it."
-    },
-    {
-      "id": "pq-002",
-      "asked_at": "2026-09-18T00:46:00Z",
-      "question": "Do you accept scoped waivers for native SMOKE-001 and VISUAL-001 (capability-blocked in this sandbox) so the phase can be labelled phase-complete-with-waiver?",
-      "context": "A waiver needs an approving_actor; I cannot self-approve. Without it the honest label stays incomplete."
-    }
+    {"id": "pq-https", "asked_at": "2026-09-19T18:04:14Z", "question": "Can you turn on GitHub Pages → Enforce HTTPS for megatory-live.delqurolabs.app?", "context": "Certificate is already approved; https_enforced is still false."},
+    {"id": "pq-waiver", "asked_at": "2026-09-19T18:04:14Z", "question": "Do you accept scoped waivers for native SMOKE-001 and VISUAL-001 (capability-blocked here)?", "context": "I cannot self-approve. Without a human actor the phase stays incomplete."}
   ],
   "decisions": [
-    {
-      "id": "d-001",
-      "summary": "Use Expo + React Native for iOS/Android with web companion for preview",
-      "source_path": "docs/charter.md",
-      "decided_at": "2026-09-17T00:00:00Z"
-    },
-    {
-      "id": "d-002",
-      "summary": "Offline-first with AsyncStorage and XLSX for Excel handling",
-      "source_path": "docs/charter.md",
-      "decided_at": "2026-09-17T00:00:00Z"
-    },
-    {
-      "id": "d-003",
-      "summary": "Quantity adds to count (not replace) by default per user request",
-      "source_path": "lib/domain/inventory.ts",
-      "decided_at": "2026-09-17T22:00:00Z"
-    },
-    {
-      "id": "d-004",
-      "summary": "Template columns: 16 columns, Qty On Hand is editable, others locked concept",
-      "source_path": "lib/domain/inventory.ts",
-      "decided_at": "2026-09-17T22:00:00Z"
-    },
-    {
-      "id": "d-005",
-      "summary": "Component tests run in jsdom via react-native-web rather than the jest-expo native preset, which is OOM-killed on this 3.9 GB host. Tests are labelled target: web and make no native claim.",
-      "source_path": "jest.config.js",
-      "decided_at": "2026-09-18T00:46:00Z"
-    },
-    {
-      "id": "d-006",
-      "summary": "query-string pinned to ^7.1.3 (CommonJS) instead of ^9.5.1 (ESM-only) because expo-router 4.0.22 require()s it as an undeclared phantom dependency; v9 breaks `expo export --platform web`. Guarded by __tests__/deps.test.ts.",
-      "source_path": "package.json",
-      "decided_at": "2026-09-18T00:46:00Z"
-    },
-    {
-      "id": "d-007",
-      "summary": "The inventory card is a plain View, not a TouchableOpacity: wrapping the +1/Edit/delete controls produced <button> inside <button> (invalid DOM nesting and an a11y violation). The Edit control performs the identical navigation, so no behaviour was lost.",
-      "source_path": "app/index.tsx",
-      "decided_at": "2026-09-18T00:46:00Z"
-    },
-    {
-      "id": "d-008",
-      "summary": "Gate evidence must be reproducible: recorded commands that cannot run in this sandbox (expo start without --offline) and unmeasured claims (PERF cold start, manual A11Y/VISUAL/SEC) are corrected or retracted rather than carried forward.",
-      "source_path": "artifacts/verification.json",
-      "decided_at": "2026-09-18T00:46:00Z"
-    },
-    {
-      "id": "d-009",
-      "decided_at": "2026-09-18T00:00:00Z",
-      "summary": "Replace the vulnerable direct xlsx dependency with @e965/xlsx@0.20.3, preserving the SheetJS-compatible API used by import/export."
-    }
+    {"id": "d-001", "summary": "Use Expo + React Native with web companion", "source_path": "docs/charter.md", "decided_at": "2026-09-17T00:00:00Z"},
+    {"id": "d-003", "summary": "Quantity adds to count by default", "source_path": "lib/domain/inventory.ts", "decided_at": "2026-09-17T22:00:00Z"},
+    {"id": "d-010", "summary": "Q3-2026 hospital Excel is the export master (three tabs, PACK UNITS, LOG #1)", "source_path": "lib/storage/excel.ts", "decided_at": "2026-09-19T00:00:00Z"},
+    {"id": "d-011", "summary": "Kiosk + one hospital notebook; Excel merge is backup not the sharing model", "source_path": "components/KioskGate.tsx", "decided_at": "2026-09-19T00:00:00Z"},
+    {"id": "d-012", "summary": "PairDrop is an external https://pairdrop.net link with target=_blank, not Linking.openURL", "source_path": "components/PairDropLink.tsx", "decided_at": "2026-09-19T17:31:00Z"},
+    {"id": "d-013", "summary": "Audit 2026-09-19: A11Y-001 failed on hit targets; no self-waiver; MQTT is not own-server", "source_path": "docs/audit-2026-09-19.md", "decided_at": "2026-09-19T18:04:14Z"}
   ],
-  "preferences": {},
+  "preferences": {
+    "eli10": "Simple analogies plus precise technical detail",
+    "check-design": "Visual/brand drift is in scope",
+    "no-self-waiver": "Human verifies blocked gates"
+  },
   "turn_log": [
     {
-      "at": "2026-09-17T00:00:00Z",
-      "user_message_brief": "Request vet inventory mobile app with scan to Excel template",
+      "at": "2026-09-19T18:04:14Z",
+      "user_message_brief": "Attached MASTER-MOBILE-TEST-AUDIT-AGENT-SCRIPT-v1.0.1 (file missing on disk); run test/audit",
       "actions_taken": [
-        "Created schemas",
-        "Created memory skeleton"
+        "Re-ran tsc and full Jest (62 pass)",
+        "Secret scan 0 hits; npm audit 27",
+        "Probed Pages (run 35458369895 success, https_enforced false)",
+        "Source a11y/hit-target and MQTT threat review",
+        "Added PairDrop tests; rewrote stale control records; wrote docs/audit-2026-09-19.md"
       ],
       "outcomes": [
-        "Schemas created",
-        "Memory initialized"
+        "TYPECHECK/UNIT/COMPONENT/web-SMOKE passed",
+        "A11Y-001 failed (hit targets)",
+        "SEC records no longer claim local-only",
+        "completion label incomplete"
       ],
       "new_blockers": [],
       "unresolved": [
-        "Excel template exact columns"
-      ]
-    },
-    {
-      "at": "2026-09-17T22:00:00Z",
-      "user_message_brief": "Built app and verified gates",
-      "actions_taken": [
-        "Scaffolded Expo app",
-        "Implemented domain, storage, Excel",
-        "Built 4 screens: list, scan, add, import-export",
-        "Ran typecheck and unit tests",
-        "Started web preview on 8081"
-      ],
-      "outcomes": [
-        "App working end-to-end",
-        "6 unit tests passed",
-        "Web preview live",
-        "Phase-complete"
-      ],
-      "new_blockers": [
-        "Native build requires EAS"
-      ],
-      "unresolved": [
-        "Exact column mapping confirmation"
-      ]
-    },
-    {
-      "at": "2026-09-18T00:46:00Z",
-      "user_message_brief": "Prior chat corrupted; asked to continue development here.",
-      "actions_taken": [
-        "Reinstalled node_modules (absent after the corruption)",
-        "Re-ran TYPECHECK-001, UNIT-001 and rebuilt COMPONENT-001 as real rendered tests",
-        "Wrote __tests__/inventoryScreen.test.tsx (6 tests) and __tests__/inventoryA11y.test.tsx (6 tests)",
-        "Added accessibility labels to app/index.tsx and removed nested interactive controls",
-        "Diagnosed and fixed the web static export failure (query-string v9 ESM vs expo-router CJS require)",
-        "Added __tests__/deps.test.ts (2 tests) and proved them non-vacuous against v9",
-        "Ran a real automated SEC-001 secret scan of source and the served client bundle",
-        "Measured PERF-001 and retracted the previous unmeasured claim",
-        "Rewrote artifacts/verification.json with measured hashes, timestamps and honest states",
-        "Added scripts/validate_records.cjs; validated 6/6 records against schemas/",
-        "Fixed .gitignore so node_modules/, dist/ and .expo/ are not committed",
-        "Restarted the web preview on 0.0.0.0:8081 and verified the served bundle reflects the edits"
-      ],
-      "outcomes": [
-        "typecheck clean (tsc --noEmit exit 0)",
-        "24 tests pass across 5 suites",
-        "expo export --platform web succeeds: 6 static routes, exit 0",
-        "web preview serving HTTP 200 with 0 unresolved modules",
-        "6/6 control records schema-valid",
-        "completion label corrected from phase-complete to incomplete"
-      ],
-      "new_blockers": [
-        "VISUAL-001 capability-blocked: no headless browser in sandbox",
-        "waivers need a user approving_actor",
-        "api.expo.dev unreachable, so expo commands require --offline"
-      ],
-      "unresolved": [
-        "oi-001 exact master template columns",
-        "oi-002 a11y labels on add/scan/import-export screens",
-        "oi-003 npm audit triage",
-        "oi-004 missing spec_lint.py"
-      ]
-    },
-    {
-      "at": "2026-09-18T00:00:00Z",
-      "user_message_brief": "Asked to continue development after supplying the master template image.",
-      "actions_taken": [
-        "Mapped the supplied 16-column master layout in TEMPLATE_COLUMNS and Excel serialization",
-        "Added accessibility labels, roles, and selected-state announcements to add, scan, and import-export screens",
-        "Ran typecheck and the existing Jest suite"
-      ],
-      "outcomes": [
-        "Typecheck clean",
-        "24 tests pass across 5 suites",
-        "All six control records remain schema-valid"
-      ],
-      "new_blockers": [],
-      "unresolved": [
-        "Rendered component tests for add, scan, and import-export screens",
-        "npm audit triage",
-        "native smoke and visual waivers"
-      ]
-    },
-    {
-      "at": "2026-09-18T00:00:00Z",
-      "user_message_brief": "Requested fixing the remaining issues.",
-      "actions_taken": [
-        "Replaced direct vulnerable xlsx dependency with @e965/xlsx@0.20.3",
-        "Ran full Jest suite, TypeScript check, and web static export",
-        "Rechecked npm audit"
-      ],
-      "outcomes": [
-        "24 tests pass across 5 suites",
-        "Web export succeeds with 6 routes",
-        "Audit reduced to 27 advisories; direct xlsx finding removed"
-      ],
-      "new_blockers": [
-        "Expo/React Native dependency-chain advisories remain"
-      ],
-      "unresolved": [
-        "Compatibility-aware audit triage",
-        "Native smoke and visual waivers"
+        "own-server notebook",
+        "Pages HTTPS-enforce",
+        "hit targets",
+        "native smoke/visual waivers"
       ]
     }
   ],
-  "archived": []
+  "archived": [
+    {"id": "oi-001", "kind": "open_item", "summary": "Confirm exact protected master headers", "resolved_at": "2026-09-19T18:04:14Z", "resolution": "Code now emits Q3-2026 three-tab layout; remaining human paste-check is na-excel-human / REQ-011."},
+    {"id": "oi-002", "kind": "open_item", "summary": "A11y labels missing on add/scan/import-export", "resolved_at": "2026-09-19T18:04:14Z", "resolution": "Labels present on all four screens. Replaced by oi-hit-targets."},
+    {"id": "pq-001", "kind": "question", "summary": "Share original workbook", "resolved_at": "2026-09-19T18:04:14Z", "resolution": "Layout implemented from hospital sheet mapping; live file still not in repo (by design)."}
+  ]
 }
