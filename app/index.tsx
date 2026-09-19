@@ -3,6 +3,7 @@ import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'r
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { InventoryItem, normalizeBarcode } from '../lib/domain/inventory';
 import { loadInventory, saveInventory, loadMeta } from '../lib/storage/inventoryStorage';
+import { useKioskHeader } from '../components/KioskGate';
 
 export default function InventoryScreen() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function InventoryScreen() {
   const [showUncounted, setShowUncounted] = useState(false);
   const [deviceName, setDeviceName] = useState('Phone');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const kiosk = useKioskHeader();
 
   const refresh = useCallback(async () => {
     const loaded = await loadInventory();
@@ -125,8 +127,16 @@ export default function InventoryScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <View style={styles.pill}><Text style={styles.pillText}>📱 {deviceName}</Text></View>
-        <View style={styles.pill}><Text style={styles.pillText}> {countedCount} counted • {items.length} in sheet • this phone</Text></View>
+        <View style={styles.pill}><Text style={styles.pillText}>📱 {kiosk.label || deviceName}</Text></View>
+        <View style={styles.pill}><Text style={styles.pillText}> {countedCount} counted • {items.length} in hospital notebook</Text></View>
+        <TouchableOpacity
+          style={styles.pill}
+          onPress={kiosk.onLock}
+          accessibilityRole="button"
+          accessibilityLabel="Lock clock"
+        >
+          <Text style={styles.pillText}>Lock</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.pill, showUncounted && styles.pillActive]}
           onPress={() => setShowUncounted(v => !v)}
@@ -178,7 +188,7 @@ export default function InventoryScreen() {
         <View style={styles.empty}>
           <View style={styles.emptyBlob}><Text style={{ fontSize: 40 }}>📦</Text></View>
           <Text style={styles.emptyTitle}>{items.length ? 'Nothing counted yet' : 'No stock yet'}</Text>
-          <Text style={styles.emptyText}>{items.length ? `${items.length} items are waiting in the hospital sheet. Scan or search to start filling COUNT. Saved on this phone only.` : 'Scan a bottle or add manually. Counts stay on this phone — Files has a QR for other phones.'}</Text>
+          <Text style={styles.emptyText}>{items.length ? `${items.length} items are waiting in the hospital sheet. Scan or search to start filling COUNT. Saved to the hospital notebook.` : 'Scan a bottle or add manually. Counts save to the hospital notebook — every clock with this PIN shares it.'}</Text>
           <View style={styles.emptyActions}>
             <Link href="/scan" asChild>
               <TouchableOpacity style={styles.primaryBtn} accessibilityRole="button" accessibilityLabel="Scan a bottle barcode">

@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { InventoryItem } from '../domain/inventory';
+import { loadRegistration } from '../kiosk/session';
+import { pullNotebook, pushNotebook } from '../kiosk/notebook';
 
 /**
  * Storage keys are namespaced `megatory_live_*` (the product name).
@@ -52,7 +54,7 @@ export async function migrateLegacyStorage(): Promise<void> {
   return migration;
 }
 
-export async function loadInventory(): Promise<InventoryItem[]> {
+export async function loadCachedInventory(): Promise<InventoryItem[]> {
   try {
     await migrateLegacyStorage();
     const raw = await AsyncStorage.getItem(KEY);
@@ -60,16 +62,45 @@ export async function loadInventory(): Promise<InventoryItem[]> {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
+    console.warn('Failed to load cached inventory', e);
+    return [];
+  }
+}
+
+export async function loadInventory(): Promise<InventoryItem[]> {
+  try {
+    await migrateLegacyStorage();
+    const reg = await loadRegistration();
+    if (reg?.blobId && reg.sitePin) {
+      try {
+        const remote = await pullNotebook(reg);
+        await AsyncStorage.setItem(KEY, JSON.stringify(remote));
+        return remote;
+      } catch (e) {
+        console.warn('Hospital notebook pull failed; using last cache', e);
+      }
+    }
+    return loadCachedInventory();
+  } catch (e) {
     console.warn('Failed to load inventory', e);
     return [];
   }
 }
 
-export async function saveInventory(items: InventoryItem[]): Promise<void> {
+export async function saveInventory(items: InventoryItem[], opts?: { localOnly?: boolean }): Promise<void> {
   await migrateLegacyStorage();
   await AsyncStorage.setItem(KEY, JSON.stringify(items));
   const meta = await loadMeta();
   await AsyncStorage.setItem(META_KEY, JSON.stringify({ ...meta, totalCounts: items.length }));
+  if (opts?.localOnly) return;
+  const reg = await loadRegistration();
+  if (reg?.blobId && reg.sitePin) {
+    try {
+      await pushNotebook(reg, items);
+    } catch (e) {
+      console.warn('Hospital notebook push failed; counts are cached on this clock until it can save', e);
+    }
+  }
 }
 
 export async function loadMeta(): Promise<StorageMeta> {

@@ -115,7 +115,7 @@ export default function ImportExportScreen() {
   const handleClear = async () => {
     await clearInventory();
     setConfirmClear(false);
-    setStatus('Cleared counts on this phone');
+    setStatus('Cleared this clock’s cache');
   };
   const handleTemplateDownload = async () => {
     try {
@@ -135,15 +135,15 @@ export default function ImportExportScreen() {
       <ShareQr />
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>📓 Where counts live</Text>
+        <Text style={styles.cardTitle}>📓 Hospital notebook</Text>
         <Text style={styles.cardDesc}>
-          This phone’s browser keeps a private notebook (keys megatory_live_inventory_v1 and megatory_live_meta_v1). Another phone is another notebook — they do not talk to each other. Combine by Export on each phone, then Import with Add qty on one phone. There is no shared server until the API is confirmed.
+          Counts save to the hospital notebook (encrypted, opened with the site PIN). Every clock that joins this PIN shares the same COUNT. This phone only keeps a cache and who is signed in. Copy the link above so other phones join instead of starting a second notebook.
         </Text>
       </View>
 
       <View style={[styles.card, styles.soft1]}>
         <Text style={styles.cardTitle}>📱 Device Identity</Text>
-        <Text style={styles.cardDesc}>Name this phone, and the hospital code used in MEGATORY_OAKVW filenames</Text>
+        <Text style={styles.cardDesc}>Clock name and hospital code for MEGATORY_OAKVW filenames. The site PIN is set at register.</Text>
         <TextInput style={styles.input} value={deviceName} onChangeText={setDeviceName} accessibilityLabel="Device name" placeholder="e.g. Pharmacy-iPad" placeholderTextColor="#94a3b8" />
         <TextInput style={styles.input} value={hospitalCode} onChangeText={setHospitalCode} accessibilityLabel="Hospital code" placeholder="Hospital code e.g. OAKVW" placeholderTextColor="#94a3b8" autoCapitalize="characters" />
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Save device name" style={styles.btn} onPress={handleSaveDeviceName}><Text style={styles.btnText}>Save Device</Text></TouchableOpacity>
@@ -163,7 +163,7 @@ export default function ImportExportScreen() {
 
       <View style={[styles.card, styles.soft2]}>
         <Text style={styles.cardTitle}>🛰️ Server</Text>
-        <Text style={styles.cardDesc}>Counts are stored on this device. Server sync is not enabled until the API contract is confirmed.</Text>
+        <Text style={styles.cardDesc}>Optional extra API. The hospital notebook above is already shared. Use this only if you attach your own Traefik/API host.</Text>
         <Text style={styles.serverUrl}>{BACKEND_BASE_URL}</Text>
         <TouchableOpacity
           accessibilityRole="button"
@@ -206,11 +206,11 @@ export default function ImportExportScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>🪄 Multi-Phone Flow</Text>
-        <Text style={styles.step}>1️⃣ Each person counts (Name+Qty) on their phone</Text>
-        <Text style={styles.step}>2️⃣ Export → file saved → Share</Text>
-        <Text style={styles.step}>3️⃣ Collect files</Text>
-        <Text style={styles.step}>4️⃣ Master: Import each with Add quantities</Text>
-        <Text style={styles.step}>5️⃣ Final Export = MEGATORY_HospitalCode_3Q2026.xlsx</Text>
+        <Text style={styles.step}>1️⃣ Register one clock (hospital code + site PIN)</Text>
+        <Text style={styles.step}>2️⃣ Other phones: scan the QR / paste the link, same PIN</Text>
+        <Text style={styles.step}>3️⃣ Each person types their name and counts</Text>
+        <Text style={styles.step}>4️⃣ Everyone is writing the same hospital notebook</Text>
+        <Text style={styles.step}>5️⃣ Export Excel when the count is done = MEGATORY_HospitalCode_3Q2026.xlsx</Text>
       </View>
 
       <View style={[styles.card, styles.soft3]}>
@@ -223,9 +223,9 @@ export default function ImportExportScreen() {
         <Text style={styles.cardTitle}>Danger Zone</Text>
         {confirmClear ? (
           <>
-            <Text style={styles.cardDesc}>This erases COUNT numbers on THIS phone only. Excel files already exported are not touched.</Text>
+            <Text style={styles.cardDesc}>This erases the cache on THIS clock. The hospital notebook on the other clocks is not deleted. Excel files already exported are not touched.</Text>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Confirm clear all local inventory counts" style={[styles.btn, styles.btnDanger]} onPress={handleClear}>
-              <Text style={styles.btnText}>Yes, erase this phone</Text>
+              <Text style={styles.btnText}>Yes, erase this clock’s cache</Text>
             </TouchableOpacity>
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Keep local inventory counts" style={[styles.btn, styles.btnSecondary]} onPress={() => setConfirmClear(false)}>
               <Text style={styles.btnText}>Keep counts</Text>

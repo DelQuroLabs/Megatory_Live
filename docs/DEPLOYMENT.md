@@ -76,6 +76,15 @@ Given §2, this is the path that can go live now: the frontend does not depend o
 Asset paths in the export are root-absolute (`/_expo/…`), so the app must be
 served at a **domain root**, not a sub-path.
 
+## 3b. Hospital notebook (live on Pages, no Traefik)
+
+GitHub Pages cannot `POST /api`. The kiosk therefore stores the shared COUNT as a PIN-encrypted blob (jsonblob) whose id is in the clock’s join URL (`?ns=` hospital, `?nb=` notebook id). The SPA never embeds a GitHub token.
+
+- First clock creates the blob; Files → Copy link is how other clocks join.
+- Wrong PIN cannot decrypt.
+- Last write wins if two clocks save at the same moment — lock/sign-in is meant to take turns.
+- Do **not** point the live app at Traefik `13.140.43.0`; that host is still 503.
+
 ## 4. Backend contract — still open
 
 `lib/backend/config.ts` reads `EXPO_PUBLIC_API_BASE_URL`, defaulting to

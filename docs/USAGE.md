@@ -37,20 +37,22 @@ SVP GL | MANUFACTURER | MANUFACTURER NUMBER | ITEM DESCRIPTION | PACK PRICE | PA
 - **Write-ins**: `!!SELECT GL!!` rows at the bottom of INVENTORY SHEET.
 - Save as `MEGATORY_<HospitalCode>_3Q2026.xlsx` (Oak View → `MEGATORY_OAKVW`).
 
-### 3. Import / Export / Multi-Phone Compile
+### 3. One hospital notebook (kiosk clocks)
 
-**Single phone:**
-- Count → Export → Excel file → Copy Qty column into your protected master.
+Counts do **not** live only on each phone. Think of a shared classroom notebook: every iPad is a clock; the notebook is on the server.
 
-**Multiple phones (your requested workflow):**
-1. Each person counts their area on their own phone (Pharmacy, Surgery, etc)
-2. Each phone: Import/Export → Export Current Inventory → Share file (AirDrop, email, Drive)
-3. Collect all .xlsx files on one master phone/laptop
-4. On master phone: Import/Export → Import Excel File (choose file 1) → strategy "Add quantities" → Import file 2 → Import file 3... 
-   - New items get added
-   - Existing items (same barcode) have quantities **summed**
-5. Final Export = compiled inventory of all phones
-6. Copy final Qty column into protected master template
+**Register (Dayforce WebClock-style):**
+1. First clock: hospital code (namespace), clock name, 4–8 digit site PIN.
+2. That clock opens the hospital notebook. Files → Copy link (includes `?ns=` and `?nb=`).
+3. Other phones open that link, type the **same** site PIN, name their clock.
+4. Each person types their name (who is counting), then scans. Lock when they walk away.
+
+The printed app QR still opens the site. **Joining the same notebook needs the Copy link**, not only the printed QR — otherwise a second clock would start a second notebook.
+
+**Excel:**
+- Import the hospital `MEGATORY_…3Q2026` file once (it lands in the shared notebook).
+- Count on any clock.
+- Export when done = `MEGATORY_<HospitalCode>_3Q2026.xlsx`.
 
 **Template import:**
 - If you already have a template file with drugs listed but no counts, Import it first, then start scanning/counting — it will populate your app with all drugs, then you just add quantities.

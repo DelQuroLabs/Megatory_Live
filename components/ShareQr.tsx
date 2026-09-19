@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { CANONICAL_APP_URL } from '../lib/share/appUrl';
 import { APP_QR_SRC } from '../lib/share/qr';
+import { kioskUrl, loadRegistration, subscribeKiosk } from '../lib/kiosk/session';
 
 export function ShareQr() {
   const [copied, setCopied] = useState(false);
+  const [url, setUrl] = useState(CANONICAL_APP_URL);
+
+  useEffect(() => {
+    const read = async () => {
+      const reg = await loadRegistration();
+      setUrl(reg ? kioskUrl(CANONICAL_APP_URL, reg) : CANONICAL_APP_URL);
+    };
+    read();
+    return subscribeKiosk(read);
+  }, []);
 
   const copy = async () => {
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(CANONICAL_APP_URL);
+        await navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
@@ -19,10 +30,10 @@ export function ShareQr() {
   };
 
   return (
-    <View style={styles.card} accessibilityLabel={`QR code to open Megatory Live at ${CANONICAL_APP_URL}`}>
-      <Text style={styles.title}>📲 Open on another phone</Text>
+    <View style={styles.card} accessibilityLabel={`QR code to open Megatory Live at ${url}`}>
+      <Text style={styles.title}>📲 Open on another clock</Text>
       <Text style={styles.desc}>
-        Point any phone camera at this square — like a door sticker. It opens the live app. Each phone keeps its own notebook. They do not share counts until you export Excel on one and import it on another.
+        Point any phone camera at this square, or copy the link. They enter the same site PIN and share the hospital notebook — not a separate clipboard on each phone.
       </Text>
       <View style={styles.qrWrap}>
         {Platform.OS === 'web'
@@ -33,9 +44,9 @@ export function ShareQr() {
               alt: `QR code for ${CANONICAL_APP_URL}`,
               style: { width: 200, height: 200 },
             })
-          : <Text style={styles.url}>{CANONICAL_APP_URL}</Text>}
+          : <Text style={styles.url}>{url}</Text>}
       </View>
-      <Text style={styles.url} selectable>{CANONICAL_APP_URL}</Text>
+      <Text style={styles.url} selectable>{url}</Text>
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel="Copy app link"

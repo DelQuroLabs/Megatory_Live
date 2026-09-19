@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-ca
 import { useRouter } from 'expo-router';
 import { InventoryItem, findItemByBarcode } from '../lib/domain/inventory';
 import { loadInventory, saveInventory, loadMeta } from '../lib/storage/inventoryStorage';
+import { loadPerson } from '../lib/kiosk/session';
 import { WebBarcodeCamera, WebBarcodeCameraHandle } from '../components/WebBarcodeCamera';
 
 export default function ScanScreen() {
@@ -36,7 +37,7 @@ export default function ScanScreen() {
     setMatch(existing);
     setLookedUp(true);
     setFlash('');
-    setStatus(existing ? `Found ${existing.drugName || 'item'}` : 'Not in this phone’s list');
+    setStatus(existing ? `Found ${existing.drugName || 'item'}` : 'Not in the hospital notebook');
   };
 
   const resetScan = () => {
@@ -50,13 +51,14 @@ export default function ScanScreen() {
   const addOne = async (item: InventoryItem) => {
     const inventory = await loadInventory();
     const meta = await loadMeta();
+    const person = await loadPerson();
     const next = inventory.map(i =>
       i.id === item.id
         ? {
             ...i,
             quantityOnHand: (i.quantityOnHand || 0) + 1,
             lastCountedAt: new Date().toISOString(),
-            countedBy: i.countedBy || meta.deviceName || 'Phone',
+            countedBy: i.countedBy || person?.name || meta.deviceName || 'Phone',
           }
         : i,
     );
@@ -165,7 +167,7 @@ export default function ScanScreen() {
             <View style={styles.resultCard}>
               {match ? (
                 <>
-                  <Text style={styles.resultKicker}>On this phone</Text>
+                  <Text style={styles.resultKicker}>In the hospital notebook</Text>
                   <Text style={styles.resultTitle}>{match.drugName || 'Unnamed drug'}</Text>
                   <Text style={styles.resultMeta}>{match.barcode} · now {match.quantityOnHand} {match.unit}</Text>
                   {flash ? <Text style={styles.flash}>{flash}</Text> : null}
@@ -193,7 +195,7 @@ export default function ScanScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.resultKicker}>Not in this phone’s list</Text>
+                  <Text style={styles.resultKicker}>Not in the hospital notebook</Text>
                   <Text style={styles.resultTitle}>{lastData}</Text>
                   <Text style={styles.resultMeta}>Create it, or scan again. Dashes and extra zeros still match.</Text>
                   <TouchableOpacity

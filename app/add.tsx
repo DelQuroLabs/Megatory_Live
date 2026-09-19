@@ -3,6 +3,7 @@ import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Switch
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { InventoryItem, DrugForm, DrugCategory, Location, createEmptyItem, validateItem, COMMON_VET_DRUGS, generateId, SVP_GL_CATEGORIES, COUNT_TYPES, parseQuantity } from '../lib/domain/inventory';
 import { loadInventory, saveInventory, loadMeta } from '../lib/storage/inventoryStorage';
+import { loadPerson } from '../lib/kiosk/session';
 
 const FORMS: DrugForm[] = ['Tablet', 'Capsule', 'Chewable', 'Liquid', 'Injectable', 'Ointment', 'Cream', 'Powder', 'Suspension', 'Solution', 'Spot-On', 'Collar', 'Other'];
 const LOCATIONS: Location[] = ['Main Pharmacy', 'Surgery', 'Exam 1', 'Exam 2', 'Exam 3', 'Exam 4', 'ICU', 'Lab', 'Refrigerator', 'Controlled Cabinet', 'OTC Shelf', 'Warehouse', 'Other'];
@@ -22,7 +23,8 @@ export default function AddScreen() {
   useEffect(() => {
     (async () => {
       const meta = await loadMeta();
-      setDeviceName(meta.deviceName || 'Phone');
+      const person = await loadPerson();
+      setDeviceName(person?.name || meta.deviceName || 'Phone');
       if (params.id) {
         const inv = await loadInventory();
         const found = inv.find(i => i.id === params.id);
@@ -86,7 +88,7 @@ export default function AddScreen() {
     setItem(newItem);
     setQtyText(String(newItem.quantityOnHand ?? 0));
     setQtyToAdd('');
-    setBanner({ kind: 'saved', text: `Saved ${newItem.drugName || 'item'} — ${newItem.quantityOnHand} ${newItem.unit} on this phone` });
+    setBanner({ kind: 'saved', text: `Saved ${newItem.drugName || 'item'} — ${newItem.quantityOnHand} ${newItem.unit} to the hospital notebook` });
   };
 
   return (

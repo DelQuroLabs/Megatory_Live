@@ -13,6 +13,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createEmptyItem, InventoryItem } from '../lib/domain/inventory';
+import { resetKioskMemory } from '../lib/kiosk/session';
 
 const mockRouterPush = jest.fn();
 
@@ -44,6 +45,7 @@ const SEARCH_PLACEHOLDER = 'Search meds, barcode, brand...';
 describe('InventoryScreen (rendered)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetKioskMemory();
     (AsyncStorage.getItem as jest.Mock).mockReset();
   });
 

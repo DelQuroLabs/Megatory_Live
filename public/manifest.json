@@ -1,7 +1,7 @@
 {
   "name": "Megatory Live",
   "short_name": "Megatory",
-  "description": "Quarterly veterinary inventory count. Counts stay on this phone until you export Excel.",
+  "description": "Quarterly veterinary inventory count. One hospital notebook, shared across kiosk clocks.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
