@@ -42,7 +42,7 @@ export function generateExcelBuffer(items: InventoryItem[]): ArrayBuffer {
   XLSX.utils.book_append_sheet(wb, ws, 'Inventory Count');
 
   const instructionData = [
-    ['VetCount Inventory Template - Instructions'],
+    ['Megatory Live Inventory Template - Instructions'],
     [''],
     ['This file is designed to match your protected master template.'],
     ['- Only edit the COUNT column (the ninth master column) in your master file.'],

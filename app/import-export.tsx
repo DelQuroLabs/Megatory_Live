@@ -8,6 +8,8 @@ import { loadInventory, saveInventory, loadMeta, saveMeta, clearInventory } from
 import { generateExcelBuffer, parseExcelBuffer, downloadExcel } from '../lib/storage/excel';
 import { InventoryItem, mergeInventories } from '../lib/domain/inventory';
 import { ensureDir, listManagedFiles, deleteManagedFile, shareManagedFile, saveFileToManaged, arrayBufferToBase64, ManagedFile, formatFileSize } from '../lib/storage/fileManager';
+import { BACKEND_BASE_URL } from '../lib/backend/config';
+import { checkBackendHealth, BackendHealth } from '../lib/backend/api';
 
 export default function ImportExportScreen() {
   const [status, setStatus] = useState<string>('Ready');
@@ -15,6 +17,15 @@ export default function ImportExportScreen() {
   const [mergeStrategy, setMergeStrategy] = useState<'add' | 'replace'>('add');
   const [lastImport, setLastImport] = useState<{ added: number; updated: number } | null>(null);
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
+  const [health, setHealth] = useState<BackendHealth | null>(null);
+  const [checkingHealth, setCheckingHealth] = useState(false);
+
+  const handleTestConnection = async () => {
+    setCheckingHealth(true);
+    const result = await checkBackendHealth();
+    setHealth(result);
+    setCheckingHealth(false);
+  };
 
   const refreshFiles = useCallback(async () => {
     if (Platform.OS !== 'web') {
@@ -38,9 +49,9 @@ export default function ImportExportScreen() {
       const items = await loadInventory();
       if (items.length === 0) { Alert.alert('Nothing to export', 'Add some items first'); setStatus('No items'); return; }
       const buffer = generateExcelBuffer(items);
-      if (Platform.OS === 'web') { downloadExcel(items, `vet-inventory-${deviceName}-${new Date().toISOString().slice(0,10)}.xlsx`); setStatus(`Exported ${items.length} items`); return; }
+      if (Platform.OS === 'web') { downloadExcel(items, `megatory-inventory-${deviceName}-${new Date().toISOString().slice(0,10)}.xlsx`); setStatus(`Exported ${items.length} items`); return; }
       await ensureDir();
-      const fileName = `vet-inventory-${deviceName}-${new Date().toISOString().slice(0,10)}-${Date.now()}.xlsx`;
+      const fileName = `megatory-inventory-${deviceName}-${new Date().toISOString().slice(0,10)}-${Date.now()}.xlsx`;
       const base64 = arrayBufferToBase64(buffer);
       const uri = await saveFileToManaged(fileName, base64);
       await refreshFiles();
@@ -102,9 +113,9 @@ export default function ImportExportScreen() {
   const handleTemplateDownload = async () => {
     try {
       const buffer = generateExcelBuffer([]);
-      if (Platform.OS === 'web') { downloadExcel([], 'vet-inventory-TEMPLATE.xlsx'); setStatus('Template downloaded'); return; }
+      if (Platform.OS === 'web') { downloadExcel([], 'megatory-inventory-TEMPLATE.xlsx'); setStatus('Template downloaded'); return; }
       const base64 = arrayBufferToBase64(buffer);
-      const fileName = `vet-template-${Date.now()}.xlsx`;
+      const fileName = `megatory-template-${Date.now()}.xlsx`;
       const uri = await saveFileToManaged(fileName, base64);
       await refreshFiles();
       if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -131,6 +142,34 @@ export default function ImportExportScreen() {
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: mergeStrategy === 'replace' }} accessibilityLabel={`Merge mode Replace${mergeStrategy === 'replace' ? ' (selected)' : ''}`} style={[styles.pillBtn, mergeStrategy === 'replace' && styles.pillBtnActive]} onPress={() => setMergeStrategy('replace')}><Text style={[styles.pillText, mergeStrategy === 'replace' && styles.pillTextActive]}>Replace</Text></TouchableOpacity>
         </View>
         {lastImport && <View style={styles.resultBox}><Text style={styles.resultText}>Last import: {lastImport.added} new, {lastImport.updated} updated</Text></View>}
+      </View>
+
+      <View style={[styles.card, styles.soft2]}>
+        <Text style={styles.cardTitle}>🛰️ Server</Text>
+        <Text style={styles.cardDesc}>Counts are stored on this device. Server sync is not enabled until the API contract is confirmed.</Text>
+        <Text style={styles.serverUrl}>{BACKEND_BASE_URL}</Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Test connection to server"
+          accessibilityState={{ busy: checkingHealth }}
+          style={styles.btn}
+          onPress={handleTestConnection}
+          disabled={checkingHealth}
+        >
+          <Text style={styles.btnText}>{checkingHealth ? 'Testing…' : 'Test Connection'}</Text>
+        </TouchableOpacity>
+        {health && (
+          <View style={[styles.resultBox, !health.reachable && styles.resultBoxError]}>
+            <Text
+              style={[styles.resultText, !health.reachable && styles.resultTextError]}
+              accessibilityRole="text"
+            >
+              {health.reachable
+                ? `Reachable — ${health.status} (${health.latencyMs} ms)`
+                : `Unreachable — ${health.reason}`}
+            </Text>
+          </View>
+        )}
       </View>
 
       {Platform.OS !== 'web' && (
@@ -195,6 +234,9 @@ const styles = StyleSheet.create({
   pillTextActive: { color: '#15284C', fontWeight: '800' },
   resultBox: { backgroundColor: '#dcfce7', borderWidth: 1.5, borderColor: '#bbf7d0', borderRadius: 16, padding: 12, marginTop: 8 },
   resultText: { color: '#166534', fontSize: 12, fontWeight: '700' },
+  resultBoxError: { backgroundColor: '#fff1f2', borderColor: '#ffe4e6' },
+  resultTextError: { color: '#9f1239' },
+  serverUrl: { fontSize: 12, fontWeight: '700', color: '#15284C', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', marginBottom: 10 },
   step: { fontSize: 13, color: '#475569', marginBottom: 6, fontWeight: '600' },
   fileRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#EEF6FB', borderStyle: 'dashed' },
   fileName: { fontSize: 13, fontWeight: '700', color: '#15284C' },

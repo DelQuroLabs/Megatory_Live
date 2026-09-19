@@ -1,4 +1,4 @@
-# VetCount — Veterinary Inventory Scanner
+# Megatory Live — Veterinary Inventory Scanner
 
 Mobile app for veterinary general practice inventory counts.
 
@@ -55,7 +55,11 @@ Sample file: `assets/sample-vet-inventory.xlsx`
 
 ## Storage
 
-- `AsyncStorage` key `vetcount_inventory_v1`
+- `AsyncStorage` key `megatory_live_inventory_v1`
+- The app was previously branded VetCount. Data stored under the old
+  `vetcount_inventory_v1` / `vetcount_meta_v1` keys is copied forward once on
+  first read, and the legacy keys are kept so the change is reversible.
+  Covered by `__tests__/storageMigration.test.ts`.
 - `lib/storage/excel.ts` uses the maintained `@e965/xlsx` fork for import/export; the vulnerable unmaintained `xlsx` package was removed
 
 ## Verification
@@ -68,7 +72,7 @@ for the raw logs.
 |---|---|---|
 | `INSTALL-001` | passed | 2307-byte package.json, real sha256 recorded |
 | `TYPECHECK-001` | passed | `tsc --noEmit`, exit 0 |
-| `UNIT-001` | passed | 12 domain/dependency tests, including protected Excel round-trip |
+| `UNIT-001` | passed | 24 domain/dependency tests, including protected Excel round-trip, backend probe, and storage migration |
 | `COMPONENT-001` | passed | 12 tests rendering the real `app/index.tsx` in jsdom |
 | `A11Y-001` | passed | 6 automated assertions on the web target |
 | `SEC-001` | passed | automated secret scan of source + served client bundle |
@@ -82,6 +86,7 @@ for the raw logs.
 
 Two required gates are capability-blocked, so the honest phase label is **`incomplete`**,
 not `phase-complete`. A waiver needs a human `approving_actor` — it cannot be self-granted.
+The manual checks for the blocked gates are in `docs/manual-verification.md`.
 
 ### Corrections made 2026-09-18
 
@@ -107,9 +112,20 @@ The previous records over-claimed. Specifically:
   but does not declare it as a dependency, and nothing else in the tree does. v8+ is
   ESM-only, which breaks the static web export with `o.stringify is not a function`.
   `__tests__/deps.test.ts` fails if this regresses.
-- `add.tsx`, `scan.tsx` and `import-export.tsx` still have no accessibility labels (31 of
-  the 37 touch controls).
-- 27 `npm audit` advisories (15 moderate / 11 high / 1 critical) remain in the Expo/React Native toolchain and are **not yet triaged**. The direct vulnerable `xlsx` dependency was removed and replaced with `@e965/xlsx`.
+- **Deployment is blocked on a repo setting, not on code.** Every run of
+  `.github/workflows/deploy-web.yml` has passed Verify and Export and then failed
+  at **Configure Pages**. Enable **Settings → Pages → Source → GitHub Actions**.
+  Nothing can be published until a human does this.
+- Accessibility labels: ~~missing on `add.tsx`, `scan.tsx`, `import-export.tsx`~~
+  **resolved** — all four screens now label every touch control
+  (`__tests__/inventoryA11y.test.tsx`).
+- 27 `npm audit` advisories (15 moderate / 11 high / 1 critical) remain in the Expo/React
+  Native **build toolchain** and are **not yet triaged**. None were found in the shipped
+  client bundle. The direct vulnerable `xlsx` dependency was removed and replaced with
+  `@e965/xlsx`.
+- The backend is a connectivity probe only. `checkBackendHealth` is wired to the Files
+  screen; inventory sync is not, because the server contract is unconfirmed. See
+  `docs/DEPLOYMENT.md` §3.
 
 
 ## Next: Match Your Exact Template
@@ -122,4 +138,13 @@ MIT — $0/month cost ceiling
 
 ## Deployment
 
-GitHub Actions deployment is configured in `.github/workflows/deploy-web.yml`. It verifies the app and publishes the static web export to GitHub Pages. Backend deployment and API contract notes are in `docs/DEPLOYMENT.md`; the browser client defaults to `https://megatory-live.delqurolabs.app/api` and does not contain credentials.
+Full instructions, including the one human-only setup step, are in
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+- `.github/workflows/deploy-web.yml` runs typecheck + the full Jest suite +
+  `expo export --platform web`, then publishes `dist/` to GitHub Pages.
+- The workflow triggers on `main` and on the current working branch.
+- `public/CNAME` pins the custom domain `megatory-live.delqurolabs.app`.
+- The browser client reads `EXPO_PUBLIC_API_BASE_URL`, defaulting to
+  `https://megatory-live.delqurolabs.app/api`. It ships no credentials.
+- Local preview of the real export: `npm run preview` (serves `preview/`).

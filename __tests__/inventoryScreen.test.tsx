@@ -31,7 +31,7 @@ jest.mock(
 // eslint-disable-next-line import/first
 import InventoryScreen from '../app/index';
 
-const INVENTORY_KEY = 'vetcount_inventory_v1';
+const INVENTORY_KEY = 'megatory_live_inventory_v1';
 
 function seed(items: InventoryItem[]) {
   (AsyncStorage.getItem as jest.Mock).mockImplementation(async (key: string) =>
