@@ -10,10 +10,12 @@ name: Probe backend API
 #
 # Safe by construction: GET and OPTIONS only. It never POSTs to /sync, so it
 # cannot mutate inventory on the server.
+#
+# The report is posted as a comment on the branch's open PR. Artifacts and step
+# summaries live on hosts that restricted environments cannot reach, so the
+# comment is the only channel that can be read back.
 
 on:
-  push:
-    branches: [arena/01a0b59d-megatory-live]
   workflow_dispatch:
     inputs:
       base_url:

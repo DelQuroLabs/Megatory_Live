@@ -12,7 +12,35 @@ Until that is set, `.github/workflows/deploy-web.yml` fails at the
 repository cannot fix for itself; it has failed on every run so far
 (`Configure Pages` → failure, `Upload artifact` / `Deploy` → skipped).
 
-## 2. Decide where the domain points — read this before touching DNS
+## 2. What is actually at `megatory-live.delqurolabs.app` (probed 2026-09-19)
+
+Probed from a GitHub-hosted runner, because the host is unreachable from
+restricted development environments. The workflow in
+`.github/workflows/probe-backend.yml` reproduces this on demand.
+
+| Check | Result |
+|---|---|
+| DNS | `13.140.43.0` (A) — an AWS host, not GitHub Pages (`185.199.108–111.153`) |
+| TLS | `CN = TRAEFIK DEFAULT CERT`, self-signed, issued 2026-09-18, expires 2027-09-18 |
+| `GET /` | **503** `no available server` |
+| `GET /api/health` | **503** `no available server` |
+| `GET /api/inventory` | **503** `no available server` |
+
+Reading of that:
+
+- **Traefik is installed and terminating TLS** — the box is up and answering
+  HTTP/2. So this is not a server that is down.
+- **No backend is attached.** Traefik returns `503 no available server` when a
+  router matches but has no healthy upstream. There is no `/api/health` to
+  connect to: the API does not exist yet, only the proxy in front of it.
+- **The certificate is not trusted.** Browsers refuse the self-signed default
+  cert, so even DNS and routing aside, the client cannot call this host until a
+  real certificate (Traefik's ACME/Let's Encrypt resolver) is configured.
+
+Consequence for the decision in §3: there is nothing to "connect" the app to
+yet. The client's health probe will report *Unreachable*, which is correct.
+
+## 3. Decide where the domain points — read this before touching DNS
 
 The hostname and the API currently want the *same* name, and that does not work.
 
@@ -20,7 +48,7 @@ Observed on 2026-09-19:
 
 | Host | Resolves to | What that is |
 |---|---|---|
-| `megatory-live.delqurolabs.app` | `13.140.43.0` (A) | an AWS EC2 address — a server you run, **not** GitHub Pages |
+| `megatory-live.delqurolabs.app` | `13.140.43.0` (A) | your Traefik host (§2) |
 | `delqurolabs.github.io` | `185.199.108–111.153` | the canonical GitHub Pages addresses |
 
 GitHub Pages serves only static files. It cannot answer `POST /api/inventory/sync`.
@@ -30,6 +58,9 @@ to a different name — otherwise `GET /api/health` will hit Pages and 404.
 **Pick one of these two:**
 
 **A. Pages for the app, separate host for the API (recommended)**
+
+Given §2, this is the path that can go live now: the frontend does not depend on the backend.
+
 - DNS: `megatory-live.delqurolabs.app` → `CNAME delqurolabs.github.io`
 - API: `api.delqurolabs.app` → your server
 - Repo variable `MEGATORY_API_BASE_URL` = `https://api.delqurolabs.app/api`
@@ -45,7 +76,7 @@ to a different name — otherwise `GET /api/health` will hit Pages and 404.
 Asset paths in the export are root-absolute (`/_expo/…`), so the app must be
 served at a **domain root**, not a sub-path.
 
-## 3. Backend contract — still open
+## 4. Backend contract — still open
 
 `lib/backend/config.ts` reads `EXPO_PUBLIC_API_BASE_URL`, defaulting to
 `https://megatory-live.delqurolabs.app/api`. `lib/backend/api.ts` implements a
@@ -53,7 +84,7 @@ health probe with an 8s timeout that is wired to the Files screen and covered by
 tests. **Sync is deliberately not wired to any screen**: the request/response
 shapes below are a scaffold, not a confirmed contract.
 
-Assumed, unconfirmed:
+Assumed, unconfirmed — and per §2, not yet deployed behind Traefik:
 
 - `GET /api/health` → `{ "status": "ok" }`
 - `GET /api/inventory` → inventory payload
@@ -70,17 +101,19 @@ To finish this, the following are needed from whoever runs the server:
 4. Upload limits and content type for the Excel sync, if files are sent.
 5. CORS: allow the origin the app is served from.
 
-## 4. Go-live checklist
+## 5. Go-live checklist
 
 - [ ] **Enable GitHub Pages → Source: GitHub Actions** (blocking; human only)
 - [ ] Choose DNS option A or B above and reconcile the existing `13.140.43.0` A record
+- [ ] Install a trusted certificate on the Traefik host (self-signed today — browsers refuse it)
+- [ ] Attach a backend service to Traefik (every route returns `503 no available server`)
 - [ ] Confirm CORS allows the app's origin
 - [ ] Confirm the backend contract in §3, then wire `uploadInventory` / `downloadInventory`
 - [ ] Implement authentication before enabling multi-user sync
 - [ ] Run the manual checks in `docs/manual-verification.md` (camera, native build, visual)
 - [ ] Verify `GET /api/health` from a phone on cellular, not just from this network
 
-## 5. Releasing
+## 6. Releasing
 
 Every push to `main` runs typecheck + the full Jest suite + `expo export`, then
 publishes. `npm run build:web` writes `dist/`; `npm run preview` serves a local
