@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -11,6 +11,8 @@ import { ensureDir, listManagedFiles, deleteManagedFile, shareManagedFile, saveF
 import { BACKEND_BASE_URL } from '../lib/backend/config';
 import { checkBackendHealth, BackendHealth } from '../lib/backend/api';
 import { ShareQr } from '../components/ShareQr';
+import { PairDropLink } from '../components/PairDropLink';
+import { PAIRDROP_URL } from '../lib/share/pairdrop';
 
 export default function ImportExportScreen() {
   const [status, setStatus] = useState<string>('Ready');
@@ -163,15 +165,9 @@ export default function ImportExportScreen() {
         </Text>
         <Text style={styles.step}>Mail: Export → share sheet → Mail (or open the download and attach it).</Text>
         <Text style={styles.step}>AirDrop: Export → share sheet → AirDrop, or Files app → the download → Share → AirDrop. Both Apple devices, Wi‑Fi + Bluetooth on, AirDrop set to Contacts Only or Everyone for 10 minutes.</Text>
-        <Text style={styles.step}>PairDrop (Apple ↔ Android, or any two browsers): both open https://pairdrop.net on the same Wi‑Fi → one sends the .xlsx → other taps accept → Files → Import that file.</Text>
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Open PairDrop in the browser"
-          style={[styles.btn, styles.btnSecondary]}
-          onPress={() => Linking.openURL('https://pairdrop.net')}
-        >
-          <Text style={styles.btnText}>Open PairDrop</Text>
-        </TouchableOpacity>
+        <Text style={styles.step}>PairDrop (Apple ↔ Android, or any two browsers): both open pairdrop.net on the same Wi‑Fi → one sends the .xlsx → other taps accept → Files → Import that file.</Text>
+        <Text style={styles.serverUrl} selectable>{PAIRDROP_URL}</Text>
+        <PairDropLink />
       </View>
 
       <View style={styles.card}>
