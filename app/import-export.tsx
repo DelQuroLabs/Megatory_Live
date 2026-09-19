@@ -6,10 +6,11 @@ import * as Sharing from 'expo-sharing';
 import { useFocusEffect } from 'expo-router';
 import { loadInventory, saveInventory, loadMeta, saveMeta, clearInventory } from '../lib/storage/inventoryStorage';
 import { generateExcelBuffer, parseExcelBuffer, downloadExcel, megatoryExportFilename } from '../lib/storage/excel';
-import { InventoryItem, mergeInventories } from '../lib/domain/inventory';
+import { mergeInventories } from '../lib/domain/inventory';
 import { ensureDir, listManagedFiles, deleteManagedFile, shareManagedFile, saveFileToManaged, arrayBufferToBase64, ManagedFile, formatFileSize } from '../lib/storage/fileManager';
 import { BACKEND_BASE_URL } from '../lib/backend/config';
 import { checkBackendHealth, BackendHealth } from '../lib/backend/api';
+import { ShareQr } from '../components/ShareQr';
 
 export default function ImportExportScreen() {
   const [status, setStatus] = useState<string>('Ready');
@@ -20,6 +21,7 @@ export default function ImportExportScreen() {
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
   const [health, setHealth] = useState<BackendHealth | null>(null);
   const [checkingHealth, setCheckingHealth] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const handleTestConnection = async () => {
     setCheckingHealth(true);
@@ -54,7 +56,7 @@ export default function ImportExportScreen() {
     try {
       setStatus('Generating...');
       const items = await loadInventory();
-      if (items.length === 0) { Alert.alert('Nothing to export', 'Add some items first'); setStatus('No items'); return; }
+      if (items.length === 0) { setStatus('Nothing to export — add or import items first'); return; }
       const buffer = generateExcelBuffer(items);
       const fileName = megatoryExportFilename(hospitalCode || deviceName);
       if (Platform.OS === 'web') { downloadExcel(items, fileName); setStatus(`Exported ${items.length} items as ${fileName}`); return; }
@@ -92,13 +94,12 @@ export default function ImportExportScreen() {
         await refreshFiles();
       }
       const parsed = parseExcelBuffer(buffer);
-      if (parsed.length === 0) { Alert.alert('No data', 'No rows found'); setStatus('No rows'); return; }
+      if (parsed.length === 0) { setStatus('No rows found in that file'); return; }
       const existing = await loadInventory();
       const { merged, added, updated } = mergeInventories(existing, parsed, mergeStrategy);
       await saveInventory(merged);
       setLastImport({ added, updated });
       setStatus(`Imported ${parsed.length}: ${added} new, ${updated} merged`);
-      Alert.alert('Import complete', `${parsed.length} rows\n${added} new\n${updated} updated`);
     } catch (e: any) { setStatus(`Import failed: ${e.message}`); Alert.alert('Import failed', e.message); }
   };
 
@@ -112,10 +113,9 @@ export default function ImportExportScreen() {
     ]);
   };
   const handleClear = async () => {
-    Alert.alert('Clear all?', 'Deletes local counts only. Files stay.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: async () => { await clearInventory(); setStatus('Cleared'); }}
-    ]);
+    await clearInventory();
+    setConfirmClear(false);
+    setStatus('Cleared counts on this phone');
   };
   const handleTemplateDownload = async () => {
     try {
@@ -132,6 +132,15 @@ export default function ImportExportScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 14 }}>
+      <ShareQr />
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>📓 Where counts live</Text>
+        <Text style={styles.cardDesc}>
+          This phone’s browser keeps a private notebook (keys megatory_live_inventory_v1 and megatory_live_meta_v1). Another phone is another notebook — they do not talk to each other. Combine by Export on each phone, then Import with Add qty on one phone. There is no shared server until the API is confirmed.
+        </Text>
+      </View>
+
       <View style={[styles.card, styles.soft1]}>
         <Text style={styles.cardTitle}>📱 Device Identity</Text>
         <Text style={styles.cardDesc}>Name this phone, and the hospital code used in MEGATORY_OAKVW filenames</Text>
@@ -212,7 +221,21 @@ export default function ImportExportScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Danger Zone</Text>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Clear all local inventory counts" style={[styles.btn, styles.btnDanger]} onPress={handleClear}><Text style={styles.btnText}>🗑️ Clear Local (files stay)</Text></TouchableOpacity>
+        {confirmClear ? (
+          <>
+            <Text style={styles.cardDesc}>This erases COUNT numbers on THIS phone only. Excel files already exported are not touched.</Text>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Confirm clear all local inventory counts" style={[styles.btn, styles.btnDanger]} onPress={handleClear}>
+              <Text style={styles.btnText}>Yes, erase this phone</Text>
+            </TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Keep local inventory counts" style={[styles.btn, styles.btnSecondary]} onPress={() => setConfirmClear(false)}>
+              <Text style={styles.btnText}>Keep counts</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Clear all local inventory counts" style={[styles.btn, styles.btnDanger]} onPress={() => setConfirmClear(true)}>
+            <Text style={styles.btnText}>🗑️ Clear Local (files stay)</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.statusBox}><Text style={styles.statusLabel}>Status</Text><Text style={styles.statusText}>{status}</Text></View>
@@ -233,7 +256,7 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: '#15284C', padding: 16, borderRadius: 16, alignItems: 'center', marginBottom: 10, shadowColor: '#15284C', shadowOpacity: 0.2, shadowRadius: 10, elevation: 3 },
   btnPrimary: { backgroundColor: '#15284C' },
   btnSecondary: { backgroundColor: '#1E4A7A' },
-  btnDanger: { backgroundColor: '#fff1f2', borderWidth: 1.5, borderColor: '#ffe4e6' },
+  btnDanger: { backgroundColor: '#9f1239', shadowColor: '#9f1239' },
   btnText: { color: 'white', fontWeight: '800', fontSize: 14, letterSpacing: -0.2 },
   pillBar: { flexDirection: 'row', backgroundColor: '#EEF6FB', borderRadius: 999, padding: 4, gap: 4, marginTop: 8, marginBottom: 8 },
   pillBtn: { flex: 1, padding: 10, borderRadius: 999, alignItems: 'center' },

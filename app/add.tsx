@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { InventoryItem, DrugForm, DrugCategory, Location, createEmptyItem, validateItem, COMMON_VET_DRUGS, generateId, SVP_GL_CATEGORIES, COUNT_TYPES, parseQuantity } from '../lib/domain/inventory';
 import { loadInventory, saveInventory, loadMeta } from '../lib/storage/inventoryStorage';
@@ -17,6 +17,7 @@ export default function AddScreen() {
   const [qtyText, setQtyText] = useState<string>('0');
   const [isAddMode, setIsAddMode] = useState(false);
   const [deviceName, setDeviceName] = useState('Phone');
+  const [banner, setBanner] = useState<{ kind: 'error' | 'saved'; text: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -34,7 +35,7 @@ export default function AddScreen() {
         setItem(prev => ({ ...prev, barcode: params.barcode || '' }));
       }
     })();
-  }, [params.id, params.barcode]);
+  }, [params.id, params.barcode, params.mode]);
 
   const update = (field: keyof InventoryItem, value: any) => setItem(prev => ({ ...prev, [field]: value }));
 
@@ -64,7 +65,7 @@ export default function AddScreen() {
     if (isAddMode) {
       const addQty = parseQuantity(qtyToAdd);
       if (!qtyToAdd.trim() || addQty <= 0) {
-        Alert.alert('Invalid quantity', 'Enter a positive number to add (fractions like 0.5 are OK)');
+        setBanner({ kind: 'error', text: 'Enter a positive number to add (fractions like 0.5 are OK)' });
         return;
       }
       newItem.quantityOnHand = (newItem.quantityOnHand || 0) + addQty;
@@ -73,7 +74,7 @@ export default function AddScreen() {
     } else {
       newItem.quantityOnHand = parseQuantity(qtyText);
       const errors = validateItem(newItem);
-      if (errors.length) { Alert.alert('Fix errors', errors.join('\n')); return; }
+      if (errors.length) { setBanner({ kind: 'error', text: errors.join(' · ') }); return; }
       if (!newItem.id) newItem.id = generateId();
       newItem.lastCountedAt = new Date().toISOString();
       newItem.countedBy = newItem.countedBy || deviceName;
@@ -82,14 +83,30 @@ export default function AddScreen() {
     let newInv: InventoryItem[];
     if (idx >= 0) { newInv = [...inv]; newInv[idx] = newItem; } else { newInv = [...inv, newItem]; }
     await saveInventory(newInv);
-    Alert.alert('Saved', `${newItem.drugName} - ${newItem.quantityOnHand} ${newItem.unit}`, [
-      { text: 'Back to List', onPress: () => router.replace('/') },
-      { text: 'Scan Next', onPress: () => router.replace('/scan') },
-    ]);
+    setItem(newItem);
+    setQtyText(String(newItem.quantityOnHand ?? 0));
+    setQtyToAdd('');
+    setBanner({ kind: 'saved', text: `Saved ${newItem.drugName || 'item'} — ${newItem.quantityOnHand} ${newItem.unit} on this phone` });
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 14 }}>
+      {banner && (
+        <View style={[styles.banner, banner.kind === 'error' ? styles.bannerError : styles.bannerSaved]} accessibilityLiveRegion="polite">
+          <Text style={banner.kind === 'error' ? styles.bannerErrorText : styles.bannerSavedText}>{banner.text}</Text>
+          {banner.kind === 'saved' ? (
+            <View style={styles.bannerActions}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to list" style={styles.saveBtn} onPress={() => router.replace('/')}>
+                <Text style={styles.saveBtnText}>Back to list</Text>
+              </TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Scan next bottle" style={styles.cancelBtn} onPress={() => router.replace('/scan')}>
+                <Text style={styles.cancelText}>Scan next</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </View>
+      )}
+
       {isAddMode && (
         <View style={styles.addModeBanner}>
           <Text style={styles.addModeTitle}>Add Quantity Mode</Text>
@@ -200,4 +217,10 @@ const styles = StyleSheet.create({
   saveBtnText: { color: 'white', fontWeight: '800', fontSize: 16, letterSpacing: -0.3 },
   cancelBtn: { backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0', padding: 16, borderRadius: 20, alignItems: 'center' },
   cancelText: { color: '#64748b', fontWeight: '700' },
+  banner: { borderRadius: 24, padding: 16, borderWidth: 1.5 },
+  bannerError: { backgroundColor: '#fff1f2', borderColor: '#fecdd3' },
+  bannerSaved: { backgroundColor: '#ecfdf5', borderColor: '#bbf7d0' },
+  bannerErrorText: { color: '#9f1239', fontWeight: '700', fontSize: 14 },
+  bannerSavedText: { color: '#166534', fontWeight: '800', fontSize: 14 },
+  bannerActions: { marginTop: 12, gap: 8 },
 });

@@ -1,0 +1,17 @@
+{
+  "name": "Megatory Live",
+  "short_name": "Megatory",
+  "description": "Quarterly veterinary inventory count. Counts stay on this phone until you export Excel.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F8FB",
+  "theme_color": "#15284C",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

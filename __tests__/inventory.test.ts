@@ -1,8 +1,7 @@
-import { createEmptyItem, itemToTemplateRow, templateRowToItem, mergeInventories, validateItem, TEMPLATE_COLUMNS, matchToTemplate, parseQuantity } from '../lib/domain/inventory';
+import { createEmptyItem, itemToTemplateRow, templateRowToItem, mergeInventories, validateItem, TEMPLATE_COLUMNS, matchToTemplate, parseQuantity, normalizeBarcode, barcodesMatch, findItemByBarcode } from '../lib/domain/inventory';
 
 describe('Inventory Domain', () => {
   test('parseQuantity understands hospital fractions and money leftovers', () => {
-    const { parseQuantity } = require('../lib/domain/inventory');
     expect(parseQuantity('1.75')).toBe(1.75);
     expect(parseQuantity('0.33')).toBe(0.33);
     expect(parseQuantity('$31.65')).toBe(31.65);
@@ -53,6 +52,31 @@ describe('Inventory Domain', () => {
     expect(item.packUnits).toBe('10.00');
     expect(item.log1).toBe('12');
     expect(item.svpGl).toBe('Pharmacy Injectable');
+  });
+
+  test('normalizeBarcode strips dashes, spaces, and leading zeros', () => {
+    expect(normalizeBarcode('00-123-456')).toBe('123456');
+    expect(normalizeBarcode('10026696')).toBe('10026696');
+    expect(barcodesMatch('0010026696', '10026696')).toBe(true);
+    expect(barcodesMatch('10026-696', '10026696')).toBe(true);
+    expect(barcodesMatch('', '10026696')).toBe(false);
+  });
+
+  test('findItemByBarcode matches NDC-style padding', () => {
+    const items = [createEmptyItem({ barcode: '10026696', drugName: 'Alfaxan' })];
+    expect(findItemByBarcode(items, '0010026696')?.drugName).toBe('Alfaxan');
+    expect(findItemByBarcode(items, '10026-696')?.drugName).toBe('Alfaxan');
+    expect(findItemByBarcode(items, '999')).toBeUndefined();
+  });
+
+  test('mergeInventories adds quantities by barcode even when zeros/dashes differ', () => {
+    const base = [createEmptyItem({ barcode: '10026696', drugName: 'Alfaxan', quantityOnHand: 1 })];
+    const incoming = [createEmptyItem({ barcode: '00-10026696', drugName: 'Alfaxan', quantityOnHand: 0.75 })];
+    const { merged, added, updated } = mergeInventories(base, incoming, 'add');
+    expect(merged.length).toBe(1);
+    expect(merged[0].quantityOnHand).toBe(1.75);
+    expect(added).toBe(0);
+    expect(updated).toBe(1);
   });
 
   test('mergeInventories adds quantities by barcode', () => {

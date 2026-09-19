@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
-import { InventoryItem } from '../lib/domain/inventory';
+import { InventoryItem, normalizeBarcode } from '../lib/domain/inventory';
 import { loadInventory, saveInventory, loadMeta } from '../lib/storage/inventoryStorage';
 
 export default function InventoryScreen() {
@@ -11,6 +11,7 @@ export default function InventoryScreen() {
   const [filterLocation, setFilterLocation] = useState<string>('All');
   const [showUncounted, setShowUncounted] = useState(false);
   const [deviceName, setDeviceName] = useState('Phone');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const loaded = await loadInventory();
@@ -24,7 +25,8 @@ export default function InventoryScreen() {
 
   const filtered = items.filter(i => {
     const s = search.toLowerCase();
-    const matchesSearch = !s || i.drugName.toLowerCase().includes(s) || i.genericName.toLowerCase().includes(s) || i.barcode.includes(s) || i.manufacturer.toLowerCase().includes(s) || (i.svpGl || '').toLowerCase().includes(s);
+    const nb = normalizeBarcode(search);
+    const matchesSearch = !s || i.drugName.toLowerCase().includes(s) || i.genericName.toLowerCase().includes(s) || i.barcode.includes(s) || (nb && normalizeBarcode(i.barcode).includes(nb)) || i.manufacturer.toLowerCase().includes(s) || (i.svpGl || '').toLowerCase().includes(s);
     const matchesLocation = filterLocation === 'All' || i.location === filterLocation || i.svpGl === filterLocation;
     const matchesCounted = !!s || showUncounted || (i.quantityOnHand || 0) !== 0;
     return matchesSearch && matchesLocation && matchesCounted;
@@ -33,15 +35,21 @@ export default function InventoryScreen() {
   const countedCount = items.filter(i => (i.quantityOnHand || 0) !== 0).length;
   const locations = ['All', ...Array.from(new Set(items.map(i => i.svpGl || i.location).filter(Boolean)))];
 
-  const handleDelete = (id: string) => {
-    Alert.alert('Delete item?', 'This will remove the item from this device count.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
-        const newItems = items.filter(x => x.id !== id);
-        setItems(newItems);
-        await saveInventory(newItems);
-      }}
-    ]);
+  const handleAddOne = async (id: string) => {
+    const next = items.map(i =>
+      i.id === id
+        ? { ...i, quantityOnHand: (i.quantityOnHand || 0) + 1, lastCountedAt: new Date().toISOString() }
+        : i,
+    );
+    setItems(next);
+    await saveInventory(next);
+  };
+
+  const confirmDelete = async (id: string) => {
+    const newItems = items.filter(x => x.id !== id);
+    setItems(newItems);
+    setPendingDeleteId(null);
+    await saveInventory(newItems);
   };
 
   const renderItem = ({ item }: { item: InventoryItem }) => (
@@ -67,7 +75,7 @@ export default function InventoryScreen() {
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={styles.btnBubble}
-          onPress={() => router.push({ pathname: '/add', params: { id: item.id, mode: 'addQty' } })}
+          onPress={() => handleAddOne(item.id)}
           accessibilityRole="button"
           accessibilityLabel={`Add one ${item.drugName || 'unnamed drug'}`}
         >
@@ -81,14 +89,35 @@ export default function InventoryScreen() {
         >
           <Text style={[styles.btnBubbleText, { color: '#15284C' }]}>Edit</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.btnBubble, styles.btnBubbleGhost]}
-          onPress={() => handleDelete(item.id)}
-          accessibilityRole="button"
-          accessibilityLabel={`Delete ${item.drugName || 'unnamed drug'} from this device count`}
-        >
-          <Text style={[styles.btnBubbleText, { color: '#94a3b8' }]}>🗑️</Text>
-        </TouchableOpacity>
+        {pendingDeleteId === item.id ? (
+          <>
+            <TouchableOpacity
+              style={[styles.btnBubble, styles.btnBubbleDanger]}
+              onPress={() => confirmDelete(item.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`Confirm delete ${item.drugName || 'unnamed drug'} from this device count`}
+            >
+              <Text style={styles.btnBubbleText}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.btnBubble, styles.btnBubbleGhost]}
+              onPress={() => setPendingDeleteId(null)}
+              accessibilityRole="button"
+              accessibilityLabel={`Keep ${item.drugName || 'unnamed drug'}`}
+            >
+              <Text style={[styles.btnBubbleText, { color: '#15284C' }]}>Keep</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity
+            style={[styles.btnBubble, styles.btnBubbleGhost]}
+            onPress={() => setPendingDeleteId(item.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${item.drugName || 'unnamed drug'} from this device count`}
+          >
+            <Text style={[styles.btnBubbleText, { color: '#94a3b8' }]}>🗑️</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -97,7 +126,7 @@ export default function InventoryScreen() {
     <View style={styles.container}>
       <View style={styles.topBar}>
         <View style={styles.pill}><Text style={styles.pillText}>📱 {deviceName}</Text></View>
-        <View style={styles.pill}><Text style={styles.pillText}> {countedCount} counted • {items.length} in sheet</Text></View>
+        <View style={styles.pill}><Text style={styles.pillText}> {countedCount} counted • {items.length} in sheet • this phone</Text></View>
         <TouchableOpacity
           style={[styles.pill, showUncounted && styles.pillActive]}
           onPress={() => setShowUncounted(v => !v)}
@@ -149,7 +178,7 @@ export default function InventoryScreen() {
         <View style={styles.empty}>
           <View style={styles.emptyBlob}><Text style={{ fontSize: 40 }}>📦</Text></View>
           <Text style={styles.emptyTitle}>{items.length ? 'Nothing counted yet' : 'No stock yet'}</Text>
-          <Text style={styles.emptyText}>{items.length ? `${items.length} items are waiting in the hospital sheet. Scan or search to start filling COUNT.` : 'Scan a bottle or add manually. Fast, offline quarterly count'}</Text>
+          <Text style={styles.emptyText}>{items.length ? `${items.length} items are waiting in the hospital sheet. Scan or search to start filling COUNT. Saved on this phone only.` : 'Scan a bottle or add manually. Counts stay on this phone — Files has a QR for other phones.'}</Text>
           <View style={styles.emptyActions}>
             <Link href="/scan" asChild>
               <TouchableOpacity style={styles.primaryBtn} accessibilityRole="button" accessibilityLabel="Scan a bottle barcode">
@@ -197,6 +226,7 @@ const styles = StyleSheet.create({
   btnBubble: { backgroundColor: '#15284C', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, shadowColor: '#15284C', shadowOpacity: 0.2, shadowRadius: 8, elevation: 2 },
   btnBubbleSecondary: { backgroundColor: 'white', borderWidth: 1.5, borderColor: '#CDE8F0', shadowColor: '#000', shadowOpacity: 0.04 },
   btnBubbleGhost: { backgroundColor: '#F8FBFE', borderWidth: 1, borderColor: '#DCE8F0', shadowOpacity: 0 },
+  btnBubbleDanger: { backgroundColor: '#9f1239', shadowColor: '#9f1239' },
   btnBubbleText: { fontSize: 12, fontWeight: '800', color: 'white' },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
   emptyBlob: { width: 80, height: 80, borderRadius: 28, backgroundColor: '#CDE8F0', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },

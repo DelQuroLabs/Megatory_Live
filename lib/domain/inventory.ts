@@ -137,6 +137,24 @@ export const SVP_GL_CATEGORIES = [
 
 export const COUNT_TYPES = ['EACH', 'PACK/BUNDLE'] as const;
 
+/** Strip dashes/spaces and leading zeros so bottle NDC and sheet manufacturer numbers can match. */
+export function normalizeBarcode(value: string): string {
+  return String(value || '').replace(/[^0-9a-zA-Z]/g, '').replace(/^0+/, '').toLowerCase();
+}
+
+export function barcodesMatch(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const na = normalizeBarcode(a);
+  const nb = normalizeBarcode(b);
+  return !!na && na === nb;
+}
+
+export function findItemByBarcode(items: InventoryItem[], code: string): InventoryItem | undefined {
+  if (!code) return undefined;
+  return items.find(i => barcodesMatch(i.barcode, code));
+}
+
 /** Parse COUNT values like 1.75, $31.65, "$-", or blank. */
 export function parseQuantity(value: unknown): number {
   if (value === '' || value == null) return 0;
@@ -275,9 +293,13 @@ export function mergeInventories(
 ): { merged: InventoryItem[]; added: number; updated: number } {
   const map = new Map<string, InventoryItem>();
   const nameMap = new Map<string, string>(); // normalized name -> key
+  const itemKey = (item: InventoryItem) => {
+    const bc = normalizeBarcode(item.barcode);
+    return bc ? `bc:${bc}` : `id:${item.id}`;
+  };
+
   base.forEach(item => {
-    // key by barcode if present, else id
-    const key = item.barcode ? `bc:${item.barcode}` : `id:${item.id}`;
+    const key = itemKey(item);
     map.set(key, item);
     if (item.drugName) {
       nameMap.set(normalizeName(item.drugName), key);
@@ -292,8 +314,8 @@ export function mergeInventories(
     let key: string | undefined;
     let existing: InventoryItem | undefined;
 
-    if (inItem.barcode) {
-      key = `bc:${inItem.barcode}`;
+    if (inItem.barcode && normalizeBarcode(inItem.barcode)) {
+      key = `bc:${normalizeBarcode(inItem.barcode)}`;
       existing = map.get(key);
     }
     if (!existing && inItem.id) {
@@ -343,7 +365,7 @@ export function mergeInventories(
       updated++;
     } else {
       // New item - only name and qty required per user spec
-      const newKey = inItem.barcode ? `bc:${inItem.barcode}` : `id:${inItem.id}`;
+      const newKey = itemKey(inItem);
       map.set(newKey, inItem);
       if (inItem.drugName) {
         nameMap.set(normalizeName(inItem.drugName), newKey);
@@ -405,7 +427,7 @@ export function matchToTemplate(
     }
     // barcode match as fallback
     if (!found && t.barcode) {
-      found = countedItems.find(c => c.barcode && c.barcode === t.barcode && !usedCountedIds.has(c.id));
+      found = countedItems.find(c => c.barcode && barcodesMatch(c.barcode, t.barcode) && !usedCountedIds.has(c.id));
     }
 
     if (found) {
