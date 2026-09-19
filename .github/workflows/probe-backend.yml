@@ -91,9 +91,18 @@ jobs:
           path: report.md
 
       - name: Comment report on PR
-        if: ${{ inputs.pr != '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ inputs.pr }}
         run: |
-          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file report.md
+          PR="${{ inputs.pr }}"
+          if [ -z "$PR" ]; then
+            # Push-triggered runs have no input, so find the open PR for this branch.
+            PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$GITHUB_REF_NAME" \
+                   --state open --json number --jq '.[0].number // empty')
+          fi
+          if [ -n "$PR" ]; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file report.md
+            echo "posted report on PR #$PR"
+          else
+            echo "no open PR for $GITHUB_REF_NAME; report is in the job summary only"
+          fi
