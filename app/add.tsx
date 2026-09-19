@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 14, gap: 8 },
   row: { flexDirection: 'row', marginTop: 10, gap: 8, flexWrap: 'wrap' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between' },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F8FBFE', borderWidth: 1.5, borderColor: '#DCE8F0' },
+  chip: { paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999, backgroundColor: '#F8FBFE', borderWidth: 1.5, borderColor: '#DCE8F0' },
   chipActive: { backgroundColor: '#15284C', borderColor: '#15284C', shadowColor: '#15284C', shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
   chipText: { fontSize: 12, fontWeight: '700', color: '#475569' },
   chipTextActive: { color: 'white', fontWeight: '800' },

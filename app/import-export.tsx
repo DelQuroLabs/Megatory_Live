@@ -183,18 +183,18 @@ export default function ImportExportScreen() {
       </View>
 
       <View style={[styles.card, styles.soft2]}>
-        <Text style={styles.cardTitle}>🛰️ Server</Text>
-        <Text style={styles.cardDesc}>Optional extra API. The hospital notebook above is already shared. Use this only if you attach your own Traefik/API host.</Text>
+        <Text style={styles.cardTitle}>Optional extra API</Text>
+        <Text style={styles.cardDesc}>This is not the hospital notebook. Ignore it unless you attached your own Traefik/API host. A red “Unreachable” here does not mean counting is broken.</Text>
         <Text style={styles.serverUrl}>{BACKEND_BASE_URL}</Text>
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel="Test connection to server"
+          accessibilityLabel="Test extra API (not the hospital notebook)"
           accessibilityState={{ busy: checkingHealth }}
           style={styles.btn}
           onPress={handleTestConnection}
           disabled={checkingHealth}
         >
-          <Text style={styles.btnText}>{checkingHealth ? 'Testing…' : 'Test Connection'}</Text>
+          <Text style={styles.btnText}>{checkingHealth ? 'Testing extra API…' : 'Test extra API'}</Text>
         </TouchableOpacity>
         {health && (
           <View style={[styles.resultBox, !health.reachable && styles.resultBoxError]}>
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   btnDanger: { backgroundColor: '#9f1239', shadowColor: '#9f1239' },
   btnText: { color: 'white', fontWeight: '800', fontSize: 14, letterSpacing: -0.2 },
   pillBar: { flexDirection: 'row', backgroundColor: '#EEF6FB', borderRadius: 999, padding: 4, gap: 4, marginTop: 8, marginBottom: 8 },
-  pillBtn: { flex: 1, padding: 10, borderRadius: 999, alignItems: 'center' },
+  pillBtn: { flex: 1, padding: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999, alignItems: 'center' },
   pillBtnActive: { backgroundColor: 'white', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   pillText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
   pillTextActive: { color: '#15284C', fontWeight: '800' },

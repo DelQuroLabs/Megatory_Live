@@ -17,13 +17,6 @@ type DockProps = {
   };
 };
 
-const ICONS: Record<string, string> = {
-  index: '📋',
-  scan: '📷',
-  add: '＋',
-  'import-export': '📁',
-};
-
 const LABELS: Record<string, string> = {
   index: 'Stock',
   scan: 'Scan',
@@ -32,18 +25,15 @@ const LABELS: Record<string, string> = {
 };
 
 /**
- * Phone-sized pill dock.
- *
- * Expo Router's default tab bar stretches edge-to-edge on web and also
- * surfaces extra routes (_sitemap, +not-found) as mystery tabs. This dock
- * only shows the four real rooms, centered, max 440px — like four big
- * fridge magnets, not a long melted candy bar.
+ * Phone-sized dock — four rooms, no emoji, no mystery sitemap tabs.
+ * Navy like the kiosk clock; selected tab is cyan so it reads as one switch,
+ * not four different sticker icons.
  */
 export function TabDock(props: any) {
   const { state, descriptors, navigation } = props as DockProps;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const dockWidth = Math.min(440, Math.max(280, width - 32));
+  const dockWidth = Math.min(420, Math.max(300, width - 24));
 
   const visible = state.routes.filter((route: DockRoute) => {
     const href = descriptors[route.key]?.options?.href;
@@ -54,14 +44,13 @@ export function TabDock(props: any) {
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 12) }]}
+      style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}
     >
-      <View style={[styles.dock, { width: dockWidth }]}>
+      <View style={[styles.dock, { width: dockWidth }]} accessibilityRole="tablist">
         {visible.map(route => {
           const index = state.routes.findIndex(r => r.key === route.key);
           const focused = state.index === index;
           const label = LABELS[route.name] || route.name;
-          const icon = ICONS[route.name] || '•';
 
           const onPress = () => {
             const event = navigation.emit({
@@ -78,12 +67,11 @@ export function TabDock(props: any) {
             <Pressable
               key={route.key}
               onPress={onPress}
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
               accessibilityLabel={`${label} tab${focused ? ' (selected)' : ''}`}
               style={[styles.tab, focused && styles.tabActive]}
             >
-              <Text style={[styles.icon, focused && styles.iconActive]}>{icon}</Text>
               <Text style={[styles.label, focused && styles.labelActive]}>{label}</Text>
             </Pressable>
           );
@@ -101,50 +89,36 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     zIndex: 20,
+    pointerEvents: 'box-none',
   },
   dock: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: '#dce8f0',
-    padding: 6,
-    height: 68,
+    backgroundColor: '#15284C',
+    borderRadius: 22,
+    padding: 4,
+    minHeight: 56,
     overflow: 'hidden',
-    shadowColor: '#15284C',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.14,
-    shadowRadius: 20,
-    elevation: 16,
   },
   tab: {
     flex: 1,
-    borderRadius: 20,
+    minHeight: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   tabActive: {
-    backgroundColor: '#15284C',
-  },
-  icon: {
-    fontSize: 18,
-    lineHeight: 22,
-    color: '#5b7a9a',
-  },
-  iconActive: {
-    color: '#ffffff',
+    backgroundColor: '#00BBDD',
   },
   label: {
-    marginTop: 2,
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '800',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: '#5b7a9a',
+    letterSpacing: 0.2,
+    color: '#CDE8F0',
     fontFamily: Platform.OS === 'web' ? 'Nunito, system-ui, sans-serif' : undefined,
   },
   labelActive: {
-    color: '#ffffff',
+    color: '#15284C',
   },
 });

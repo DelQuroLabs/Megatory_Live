@@ -117,7 +117,7 @@ export default function InventoryScreen() {
             accessibilityRole="button"
             accessibilityLabel={`Delete ${item.drugName || 'unnamed drug'} from this device count`}
           >
-            <Text style={[styles.btnBubbleText, { color: '#94a3b8' }]}>🗑️</Text>
+            <Text style={[styles.btnBubbleText, { color: '#94a3b8' }]}>Del</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -212,7 +212,7 @@ export default function InventoryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F8FB' },
   topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12, paddingHorizontal: 16 },
-  pill: { backgroundColor: 'white', borderWidth: 1, borderColor: '#DCE8F0', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  pill: { backgroundColor: 'white', borderWidth: 1, borderColor: '#DCE8F0', paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999 },
   pillActive: { backgroundColor: '#15284C', borderColor: '#15284C' },
   pillText: { fontSize: 11, fontWeight: '800', color: '#475569' },
   pillTextActive: { color: 'white' },
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   searchIcon: { fontSize: 16, marginRight: 8, opacity: 0.6 },
   searchInput: { flex: 1, paddingVertical: 14, fontSize: 15, fontWeight: '600', color: '#15284C' },
   filterRow: { paddingBottom: 12 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0' },
+  filterChip: { paddingHorizontal: 16, paddingVertical: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999, backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0' },
   filterChipActive: { backgroundColor: '#15284C', borderColor: '#15284C', shadowColor: '#15284C', shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
   filterChipText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
   filterChipTextActive: { color: 'white', fontWeight: '800' },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   qtyText: { fontSize: 16, fontWeight: '800', color: '#15284C' },
   qtyUnit: { fontSize: 10, fontWeight: '700', color: '#00BBDD', textTransform: 'uppercase' },
   actionsRow: { flexDirection: 'row', marginTop: 12, gap: 8 },
-  btnBubble: { backgroundColor: '#15284C', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, shadowColor: '#15284C', shadowOpacity: 0.2, shadowRadius: 8, elevation: 2 },
+  btnBubble: { backgroundColor: '#15284C', paddingHorizontal: 16, paddingVertical: 12, minHeight: 44, minWidth: 44, justifyContent: 'center', borderRadius: 999 },
   btnBubbleSecondary: { backgroundColor: 'white', borderWidth: 1.5, borderColor: '#CDE8F0', shadowColor: '#000', shadowOpacity: 0.04 },
   btnBubbleGhost: { backgroundColor: '#F8FBFE', borderWidth: 1, borderColor: '#DCE8F0', shadowOpacity: 0 },
   btnBubbleDanger: { backgroundColor: '#9f1239', shadowColor: '#9f1239' },

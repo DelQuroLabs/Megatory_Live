@@ -4,39 +4,131 @@
   "current_phase": "preview",
   "current_completion_label": "incomplete",
   "accepted_core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into the Q3-2026 hospital Excel, enter quantity that adds to COUNT, support manual entry, and share one hospital notebook across clocks then export MEGATORY_<code>_3Q2026.xlsx",
-  "last_turn_summary": "Independent test/audit of HEAD f0ae808. The uploaded TEST-AUDIT script file was not on disk; ran Build-script gates plus screen/security/design review. tsc clean; 62 tests pass (added PairDrop URL + <a target=_blank> tests). A11Y-001 failed on hit targets (chips/pills/+1 paddingVertical 6–8). Native smoke/visual still blocked. Security records were lying (claimed no network); product uses public MQTT + PIN in AsyncStorage. Pages run 35458369895 success; https_enforced still false. Completion remains incomplete. No self-waiver.",
+  "last_turn_summary": "User finished PairDrop preview and said move on. Restored local HEAD to 28b04db (sandbox had rewound to 1f9d3bc). Replaced emoji tab dock with navy/cyan text tabs (Stock Scan Add Files), minHeight 48. Raised Stock/Add/Files chip and +1 hit targets to minHeight 44. Relabeled Files Test Connection to Test extra API. 65 tests pass. Preview needs restart (CI Metro).",
   "next_actions": [
-    {"id": "na-https", "action": "Human: enable GitHub Pages HTTPS-only for megatory-live.delqurolabs.app"},
-    {"id": "na-server", "action": "Replace public MQTT notebook with the project's own server storage (user standing instruction)"},
-    {"id": "na-pin", "action": "Stop storing the site PIN in AsyncStorage; use Keychain/Keystore"},
-    {"id": "na-a11y-hits", "action": "Enlarge Stock/Add chips, Lock pill, and +1/Edit bubbles to >= 44pt", "gate": "A11Y-001"},
-    {"id": "na-waiver", "action": "Human approving_actor for native SMOKE-001 and VISUAL-001 waivers — agent cannot self-approve", "gate": "SMOKE-001, VISUAL-001"},
-    {"id": "na-excel-human", "action": "Human compare export against MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx"},
-    {"id": "na-audit-advisories", "action": "Triage npm audit 27 findings before production-candidate", "gate": "SEC-001"}
+    {
+      "id": "na-https",
+      "action": "Human: enable GitHub Pages HTTPS-only for megatory-live.delqurolabs.app"
+    },
+    {
+      "id": "na-server",
+      "action": "Replace public MQTT notebook with the project's own server storage"
+    },
+    {
+      "id": "na-pin",
+      "action": "Stop storing the site PIN in AsyncStorage; use Keychain/Keystore"
+    },
+    {
+      "id": "na-waiver",
+      "action": "Human approving_actor for native SMOKE-001 and VISUAL-001 waivers",
+      "gate": "SMOKE-001, VISUAL-001"
+    },
+    {
+      "id": "na-excel-human",
+      "action": "Human compare export against MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx"
+    }
   ],
   "open_items": [
-    {"id": "oi-mqtt-vs-server", "summary": "Notebook is public MQTT, not own-server storage", "opened_at": "2026-09-19T18:04:14Z", "notes": "User reversed local-only on 2026-09-19. Current stand-in is encrypted retain on emqx/hivemq/mosquitto."},
-    {"id": "oi-hit-targets", "summary": "Interactive chips/pills/+1 below 44pt", "opened_at": "2026-09-19T18:04:14Z", "notes": "Cause of A11Y-001 failed this audit."},
-    {"id": "oi-003", "summary": "npm audit advisories not triaged", "opened_at": "2026-09-18T00:46:00Z", "notes": "27 vulnerabilities (15 moderate, 11 high, 1 critical)."},
-    {"id": "oi-pages-https", "summary": "Pages https_enforced=false", "opened_at": "2026-09-19T18:04:14Z", "notes": "Human GitHub setting. Certificate already approved through 2026-12-18."}
+    {
+      "id": "oi-mqtt-vs-server",
+      "summary": "Notebook is public MQTT, not own-server storage",
+      "opened_at": "2026-09-19T18:04:14Z",
+      "notes": "User reversed local-only on 2026-09-19. Current stand-in is encrypted retain on emqx/hivemq/mosquitto."
+    },
+    {
+      "id": "oi-003",
+      "summary": "npm audit advisories not triaged",
+      "opened_at": "2026-09-18T00:46:00Z",
+      "notes": "27 vulnerabilities (15 moderate, 11 high, 1 critical)."
+    },
+    {
+      "id": "oi-pages-https",
+      "summary": "Pages https_enforced=false",
+      "opened_at": "2026-09-19T18:04:14Z",
+      "notes": "Human GitHub setting. Certificate already approved through 2026-12-18."
+    }
   ],
   "blockers": [
-    {"id": "b-001", "summary": "Native iOS/Android smoke/build/e2e need a device or EAS", "category": "capability-missing", "related_gate": "SMOKE-001", "since": "2026-09-17T21:50:00Z"},
-    {"id": "b-002", "summary": "VISUAL-001 needs a headless browser", "category": "capability-missing", "related_gate": "VISUAL-001", "since": "2026-09-18T00:46:00Z"},
-    {"id": "b-003", "summary": "Waivers need a human approving_actor", "category": "waiting-for-user", "related_gate": "SMOKE-001", "since": "2026-09-18T00:46:00Z"},
-    {"id": "b-https", "summary": "Pages HTTPS-enforce is a human GitHub setting", "category": "waiting-for-user", "related_gate": "SEC-001", "since": "2026-09-19T18:04:14Z"}
+    {
+      "id": "b-001",
+      "summary": "Native iOS/Android smoke/build/e2e need a device or EAS",
+      "category": "capability-missing",
+      "related_gate": "SMOKE-001",
+      "since": "2026-09-17T21:50:00Z"
+    },
+    {
+      "id": "b-002",
+      "summary": "VISUAL-001 needs a headless browser",
+      "category": "capability-missing",
+      "related_gate": "VISUAL-001",
+      "since": "2026-09-18T00:46:00Z"
+    },
+    {
+      "id": "b-003",
+      "summary": "Waivers need a human approving_actor",
+      "category": "waiting-for-user",
+      "related_gate": "SMOKE-001",
+      "since": "2026-09-18T00:46:00Z"
+    },
+    {
+      "id": "b-https",
+      "summary": "Pages HTTPS-enforce is a human GitHub setting",
+      "category": "waiting-for-user",
+      "related_gate": "SEC-001",
+      "since": "2026-09-19T18:04:14Z"
+    }
   ],
   "pending_user_questions": [
-    {"id": "pq-https", "asked_at": "2026-09-19T18:04:14Z", "question": "Can you turn on GitHub Pages → Enforce HTTPS for megatory-live.delqurolabs.app?", "context": "Certificate is already approved; https_enforced is still false."},
-    {"id": "pq-waiver", "asked_at": "2026-09-19T18:04:14Z", "question": "Do you accept scoped waivers for native SMOKE-001 and VISUAL-001 (capability-blocked here)?", "context": "I cannot self-approve. Without a human actor the phase stays incomplete."}
+    {
+      "id": "pq-https",
+      "asked_at": "2026-09-19T18:04:14Z",
+      "question": "Can you turn on GitHub Pages \u2192 Enforce HTTPS for megatory-live.delqurolabs.app?",
+      "context": "Certificate is already approved; https_enforced is still false."
+    },
+    {
+      "id": "pq-waiver",
+      "asked_at": "2026-09-19T18:04:14Z",
+      "question": "Do you accept scoped waivers for native SMOKE-001 and VISUAL-001 (capability-blocked here)?",
+      "context": "I cannot self-approve. Without a human actor the phase stays incomplete."
+    }
   ],
   "decisions": [
-    {"id": "d-001", "summary": "Use Expo + React Native with web companion", "source_path": "docs/charter.md", "decided_at": "2026-09-17T00:00:00Z"},
-    {"id": "d-003", "summary": "Quantity adds to count by default", "source_path": "lib/domain/inventory.ts", "decided_at": "2026-09-17T22:00:00Z"},
-    {"id": "d-010", "summary": "Q3-2026 hospital Excel is the export master (three tabs, PACK UNITS, LOG #1)", "source_path": "lib/storage/excel.ts", "decided_at": "2026-09-19T00:00:00Z"},
-    {"id": "d-011", "summary": "Kiosk + one hospital notebook; Excel merge is backup not the sharing model", "source_path": "components/KioskGate.tsx", "decided_at": "2026-09-19T00:00:00Z"},
-    {"id": "d-012", "summary": "PairDrop is an external https://pairdrop.net link with target=_blank, not Linking.openURL", "source_path": "components/PairDropLink.tsx", "decided_at": "2026-09-19T17:31:00Z"},
-    {"id": "d-013", "summary": "Audit 2026-09-19: A11Y-001 failed on hit targets; no self-waiver; MQTT is not own-server", "source_path": "docs/audit-2026-09-19.md", "decided_at": "2026-09-19T18:04:14Z"}
+    {
+      "id": "d-001",
+      "summary": "Use Expo + React Native with web companion",
+      "source_path": "docs/charter.md",
+      "decided_at": "2026-09-17T00:00:00Z"
+    },
+    {
+      "id": "d-003",
+      "summary": "Quantity adds to count by default",
+      "source_path": "lib/domain/inventory.ts",
+      "decided_at": "2026-09-17T22:00:00Z"
+    },
+    {
+      "id": "d-010",
+      "summary": "Q3-2026 hospital Excel is the export master (three tabs, PACK UNITS, LOG #1)",
+      "source_path": "lib/storage/excel.ts",
+      "decided_at": "2026-09-19T00:00:00Z"
+    },
+    {
+      "id": "d-011",
+      "summary": "Kiosk + one hospital notebook; Excel merge is backup not the sharing model",
+      "source_path": "components/KioskGate.tsx",
+      "decided_at": "2026-09-19T00:00:00Z"
+    },
+    {
+      "id": "d-012",
+      "summary": "PairDrop is an external https://pairdrop.net link with target=_blank, not Linking.openURL",
+      "source_path": "components/PairDropLink.tsx",
+      "decided_at": "2026-09-19T17:31:00Z"
+    },
+    {
+      "id": "d-013",
+      "summary": "Audit 2026-09-19: A11Y-001 failed on hit targets; no self-waiver; MQTT is not own-server",
+      "source_path": "docs/audit-2026-09-19.md",
+      "decided_at": "2026-09-19T18:04:14Z"
+    }
   ],
   "preferences": {
     "eli10": "Simple analogies plus precise technical detail",
@@ -67,11 +159,56 @@
         "hit targets",
         "native smoke/visual waivers"
       ]
+    },
+    {
+      "at": "2026-09-19T18:45:00Z",
+      "user_message_brief": "Done with PairDrop preview; move on",
+      "actions_taken": [
+        "Reset local branch to origin 28b04db after sandbox rewind",
+        "Redesigned TabDock (no emoji, navy/cyan)",
+        "Enlarged tap targets",
+        "Relabeled Test extra API"
+      ],
+      "outcomes": [
+        "65 tests pass",
+        "tabs less funky"
+      ],
+      "new_blockers": [],
+      "unresolved": [
+        "own-server notebook",
+        "Pages HTTPS-enforce",
+        "native waivers"
+      ]
     }
   ],
   "archived": [
-    {"id": "oi-001", "kind": "open_item", "summary": "Confirm exact protected master headers", "resolved_at": "2026-09-19T18:04:14Z", "resolution": "Code now emits Q3-2026 three-tab layout; remaining human paste-check is na-excel-human / REQ-011."},
-    {"id": "oi-002", "kind": "open_item", "summary": "A11y labels missing on add/scan/import-export", "resolved_at": "2026-09-19T18:04:14Z", "resolution": "Labels present on all four screens. Replaced by oi-hit-targets."},
-    {"id": "pq-001", "kind": "question", "summary": "Share original workbook", "resolved_at": "2026-09-19T18:04:14Z", "resolution": "Layout implemented from hospital sheet mapping; live file still not in repo (by design)."}
+    {
+      "id": "oi-001",
+      "kind": "open_item",
+      "summary": "Confirm exact protected master headers",
+      "resolved_at": "2026-09-19T18:04:14Z",
+      "resolution": "Code now emits Q3-2026 three-tab layout; remaining human paste-check is na-excel-human / REQ-011."
+    },
+    {
+      "id": "oi-002",
+      "kind": "open_item",
+      "summary": "A11y labels missing on add/scan/import-export",
+      "resolved_at": "2026-09-19T18:04:14Z",
+      "resolution": "Labels present on all four screens. Replaced by oi-hit-targets."
+    },
+    {
+      "id": "pq-001",
+      "kind": "question",
+      "summary": "Share original workbook",
+      "resolved_at": "2026-09-19T18:04:14Z",
+      "resolution": "Layout implemented from hospital sheet mapping; live file still not in repo (by design)."
+    },
+    {
+      "id": "oi-hit-targets",
+      "kind": "open_item",
+      "summary": "Interactive chips/pills/+1 below 44pt",
+      "resolved_at": "2026-09-19T18:45:00Z",
+      "resolution": "minHeight 44 on Stock pills/chips/+1, Add chips, Files merge pills; TabDock tabs minHeight 48. Visual matrix still blocked."
+    }
   ]
 }

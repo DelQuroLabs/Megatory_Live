@@ -77,7 +77,6 @@ describe('InventoryScreen accessibility', () => {
       name: /delete carprofen 100mg from this device count/i,
     });
     expect(del).toBeTruthy();
-    // The emoji is still what sighted users see, but it is not the accessible name.
     expect((del.getAttribute('aria-label') || '').toLowerCase()).toContain('delete');
   });
 
