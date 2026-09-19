@@ -8,29 +8,24 @@ export type WebBarcodeCameraHandle = {
 };
 
 type Props = {
-  paused?: boolean;
-  onDetect: (code: string) => void;
+  /** Camera runs only while Scan is on screen and we are not showing a result. */
+  active?: boolean;
   onStatus?: (msg: string) => void;
 };
 
 /**
- * Own the <video> element. expo-camera's web path only scans QR via jsQR,
- * so bottle barcodes never fire. This stream is the same back camera,
- * with 1D reading and a shutter the parent can call.
+ * Preview only. No live decode loop — parent calls capture() when the
+ * person taps Read barcode.
  */
 export const WebBarcodeCamera = forwardRef<WebBarcodeCameraHandle, Props>(function WebBarcodeCamera(
-  { paused, onDetect, onStatus },
+  { active, onStatus },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const pausedRef = useRef(!!paused);
-  const onDetectRef = useRef(onDetect);
-  const busyRef = useRef(false);
   const [tapToStart, setTapToStart] = useState(false);
-
-  pausedRef.current = !!paused;
-  onDetectRef.current = onDetect;
+  const onStatusRef = useRef(onStatus);
+  onStatusRef.current = onStatus;
 
   const stopStream = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -40,11 +35,12 @@ export const WebBarcodeCamera = forwardRef<WebBarcodeCameraHandle, Props>(functi
   };
 
   const startStream = async () => {
+    if (streamRef.current) return;
     if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      onStatus?.('This browser cannot open the camera. Type the number instead.');
+      onStatusRef.current?.('This browser cannot open the camera. Type the number instead.');
       return;
     }
-    onStatus?.('Starting camera…');
+    onStatusRef.current?.('Starting camera…');
     try {
       let stream: MediaStream;
       try {
@@ -63,6 +59,7 @@ export const WebBarcodeCamera = forwardRef<WebBarcodeCameraHandle, Props>(functi
       const video = videoRef.current;
       if (!video) {
         stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
         return;
       }
       video.srcObject = stream;
@@ -73,19 +70,19 @@ export const WebBarcodeCamera = forwardRef<WebBarcodeCameraHandle, Props>(functi
       try {
         await video.play();
         setTapToStart(false);
-        onStatus?.('Point at the bars — or tap Read barcode');
+        onStatusRef.current?.('Tap Read barcode when the bars are in the frame');
       } catch {
         setTapToStart(true);
-        onStatus?.('Tap the picture to start the camera');
+        onStatusRef.current?.('Tap the picture to start the camera');
       }
     } catch (e: any) {
       const name = String(e?.name || e?.message || e);
       if (/NotAllowed|Permission/i.test(name)) {
-        onStatus?.('Camera permission is off. Type the number, or allow camera and reopen Scan.');
+        onStatusRef.current?.('Camera permission is off. Type the number, or allow camera and reopen Scan.');
       } else if (/NotFound|DevicesNotFound/i.test(name)) {
-        onStatus?.('No camera found. Type the number instead.');
+        onStatusRef.current?.('No camera found. Type the number instead.');
       } else {
-        onStatus?.('Camera did not start. Type the number instead.');
+        onStatusRef.current?.('Camera did not start. Type the number instead.');
       }
     }
   };
@@ -105,47 +102,25 @@ export const WebBarcodeCamera = forwardRef<WebBarcodeCameraHandle, Props>(functi
   }));
 
   useEffect(() => {
-    startStream();
+    if (active) startStream();
+    else stopStream();
     return () => stopStream();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const tick = async () => {
-      if (!pausedRef.current && !busyRef.current) {
-        const video = videoRef.current;
-        if (video && video.readyState >= 2) {
-          busyRef.current = true;
-          try {
-            const code = await decodeFromVideo(video, { tryHarder: false });
-            if (code && !pausedRef.current) onDetectRef.current(code);
-          } catch {
-            // keep looping
-          } finally {
-            busyRef.current = false;
-          }
-        }
-      }
-      timer = setTimeout(tick, 450);
-    };
-    timer = setTimeout(tick, 700);
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
+  }, [active]);
 
   const onTapVideo = async () => {
     if (tapToStart) {
       try {
         await videoRef.current?.play();
         setTapToStart(false);
-        onStatus?.('Point at the bars — or tap Read barcode');
+        onStatusRef.current?.('Tap Read barcode when the bars are in the frame');
       } catch {
         startStream();
       }
     }
   };
+
+  if (!active) return <View style={styles.wrap} />;
 
   return (
     <View style={styles.wrap}>

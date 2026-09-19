@@ -11,7 +11,18 @@ const GL_OPTIONS = [...SVP_GL_CATEGORIES];
 const FRACTION_CHIPS = ['0.25', '0.5', '0.75', '1', '1.75', '2'];
 
 export default function AddScreen() {
-  const params = useLocalSearchParams<{ id?: string; barcode?: string; mode?: string }>();
+  const params = useLocalSearchParams<{
+    id?: string;
+    barcode?: string;
+    mode?: string;
+    drugName?: string;
+    genericName?: string;
+    manufacturer?: string;
+    concentration?: string;
+    form?: string;
+    packUnits?: string;
+    lookupSource?: string;
+  }>();
   const router = useRouter();
   const [item, setItem] = useState<InventoryItem>(() => createEmptyItem({ barcode: params.barcode || '' }));
   const [qtyToAdd, setQtyToAdd] = useState<string>('');
@@ -33,11 +44,23 @@ export default function AddScreen() {
           setQtyText(String(found.quantityOnHand ?? 0));
           if (params.mode === 'addQty') setIsAddMode(true);
         }
-      } else if (params.barcode) {
-        setItem(prev => ({ ...prev, barcode: params.barcode || '' }));
+      } else if (params.barcode || params.drugName) {
+        const form = (params.form as DrugForm) || undefined;
+        setItem(prev => ({
+          ...prev,
+          barcode: params.barcode || prev.barcode,
+          drugName: params.drugName || prev.drugName,
+          genericName: params.genericName || prev.genericName,
+          manufacturer: params.manufacturer || prev.manufacturer,
+          concentration: params.concentration || prev.concentration,
+          form: form && FORMS.includes(form) ? form : prev.form,
+          packUnits: params.packUnits || prev.packUnits,
+          packageSize: params.packUnits || prev.packageSize,
+          notes: params.lookupSource ? `Filled from ${params.lookupSource}` : prev.notes,
+        }));
       }
     })();
-  }, [params.id, params.barcode, params.mode]);
+  }, [params.id, params.barcode, params.mode, params.drugName, params.lookupSource]);
 
   const update = (field: keyof InventoryItem, value: any) => setItem(prev => ({ ...prev, [field]: value }));
 
@@ -125,9 +148,14 @@ export default function AddScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Only Name + Qty required 💫</Text>
         <Text style={styles.sectionSub}>Everything else optional — smart-matched to the hospital sheet</Text>
+        {params.lookupSource ? (
+          <Text style={styles.sectionSub}>Filled from {params.lookupSource}. Check the bottle before you save.</Text>
+        ) : null}
         <Field label="Drug Name *" value={item.drugName} onChange={(v: string) => { update('drugName', v); handleSuggest(v); }} placeholder="e.g. Cerenia, Carprofen" />
+        <Field label="Generic name" value={item.genericName} onChange={(v: string) => update('genericName', v)} placeholder="optional" />
         <Field label="Manufacturer Number / Barcode" value={item.barcode} onChange={(v: string) => update('barcode', v)} placeholder="helps matching" />
         <Field label="Manufacturer" value={item.manufacturer} onChange={(v: string) => update('manufacturer', v)} placeholder="optional" />
+        <Field label="Concentration" value={item.concentration} onChange={(v: string) => update('concentration', v)} placeholder="e.g. 10 mg/mL" />
         <Text style={styles.label}>SVP GL (hospital category)</Text>
         <View style={styles.chipRow}>{GL_OPTIONS.map(g => (
           <TouchableOpacity key={g} accessibilityRole="button" accessibilityState={{ selected: item.svpGl === g }} accessibilityLabel={`SVP GL ${g}${item.svpGl === g ? ' (selected)' : ''}`} style={[styles.chip, item.svpGl === g && styles.chipActive]} onPress={() => update('svpGl', g)}>

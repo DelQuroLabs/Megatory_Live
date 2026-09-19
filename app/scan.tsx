@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform } from 'react-native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { InventoryItem, findItemByBarcode } from '../lib/domain/inventory';
 import { loadInventory, saveInventory, loadMeta } from '../lib/storage/inventoryStorage';
 import { loadPerson } from '../lib/kiosk/session';
 import { WebBarcodeCamera, WebBarcodeCameraHandle } from '../components/WebBarcodeCamera';
+import { lookupProductOnline, hintHasFill, ProductHint } from '../lib/scan/productLookup';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -13,23 +14,40 @@ export default function ScanScreen() {
   const [lastData, setLastData] = useState('');
   const [lookedUp, setLookedUp] = useState(false);
   const [match, setMatch] = useState<InventoryItem | null>(null);
+  const [webHint, setWebHint] = useState<ProductHint | null>(null);
   const [flash, setFlash] = useState('');
-  const [status, setStatus] = useState('Point at the bars — or tap Read barcode');
+  const [status, setStatus] = useState('Tap Read barcode when the bars are in the frame');
   const [capturing, setCapturing] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const [webBusy, setWebBusy] = useState(false);
   const cameraRef = useRef<WebBarcodeCameraHandle>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const armTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
   const isWeb = Platform.OS === 'web';
-  const nativeCamOn = !isWeb && Boolean(permission?.granted);
+  const cameraLive = focused && !lookedUp;
+  const nativeCamOn = !isWeb && Boolean(permission?.granted) && cameraLive;
+
+  useFocusEffect(useCallback(() => {
+    setFocused(true);
+    return () => {
+      setFocused(false);
+      setArmed(false);
+      if (armTimer.current) clearTimeout(armTimer.current);
+    };
+  }, []));
 
   useEffect(() => {
-    if (!isWeb) requestPermission();
+    if (!isWeb && focused) requestPermission();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [focused]);
 
   const lookup = async (data: string) => {
     const code = String(data || '').trim();
     if (!code) return;
+    setArmed(false);
+    if (armTimer.current) clearTimeout(armTimer.current);
     setLastData(code);
     setTyped(code);
     const inventory = await loadInventory();
@@ -37,15 +55,39 @@ export default function ScanScreen() {
     setMatch(existing);
     setLookedUp(true);
     setFlash('');
-    setStatus(existing ? `Found ${existing.drugName || 'item'}` : 'Not in the hospital notebook');
+    if (existing) {
+      setWebHint(null);
+      setWebBusy(false);
+      setStatus(`Found ${existing.drugName || 'item'}`);
+      return;
+    }
+    setWebHint(null);
+    setWebBusy(true);
+    setStatus('Searching the web for this number…');
+    try {
+      const hint = await lookupProductOnline(code);
+      if (hintHasFill(hint)) {
+        setWebHint(hint);
+        setStatus(`Found ${hint.drugName || 'a product'} (${hint.sourceLabel})`);
+      } else {
+        setStatus('No web match. You can still create it.');
+      }
+    } catch {
+      setStatus('Web search failed. You can still create it.');
+    } finally {
+      setWebBusy(false);
+    }
   };
 
   const resetScan = () => {
     setLookedUp(false);
     setMatch(null);
+    setWebHint(null);
     setFlash('');
     setLastData('');
-    setStatus('Point at the bars — or tap Read barcode');
+    setArmed(false);
+    setWebBusy(false);
+    setStatus('Tap Read barcode when the bars are in the frame');
   };
 
   const addOne = async (item: InventoryItem) => {
@@ -70,6 +112,16 @@ export default function ScanScreen() {
 
   const captureNow = async () => {
     if (capturing) return;
+    if (!isWeb) {
+      setArmed(true);
+      setStatus('Hold the bars in the frame — reading for a few seconds…');
+      if (armTimer.current) clearTimeout(armTimer.current);
+      armTimer.current = setTimeout(() => {
+        setArmed(false);
+        setStatus('No read. Try Read barcode again, or type the number.');
+      }, 5000);
+      return;
+    }
     setCapturing(true);
     setStatus('Reading…');
     try {
@@ -99,9 +151,25 @@ export default function ScanScreen() {
   };
 
   const handleNativeBarcode = (result: BarcodeScanningResult) => {
-    if (lookedUp) return;
+    if (!armed || lookedUp) return;
     if (!result?.data) return;
     lookup(result.data);
+  };
+
+  const goCreate = () => {
+    router.replace({
+      pathname: '/add',
+      params: {
+        barcode: lastData,
+        drugName: webHint?.drugName || '',
+        genericName: webHint?.genericName || '',
+        manufacturer: webHint?.manufacturer || '',
+        concentration: webHint?.concentration || '',
+        form: webHint?.form || '',
+        packUnits: webHint?.packUnits || '',
+        lookupSource: webHint?.sourceLabel || '',
+      },
+    });
   };
 
   return (
@@ -109,8 +177,7 @@ export default function ScanScreen() {
       {isWeb ? (
         <WebBarcodeCamera
           ref={cameraRef}
-          paused={lookedUp || capturing}
-          onDetect={lookup}
+          active={cameraLive}
           onStatus={setStatus}
         />
       ) : nativeCamOn ? (
@@ -118,13 +185,17 @@ export default function ScanScreen() {
           style={StyleSheet.absoluteFill}
           facing="back"
           barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'code93', 'qr'] }}
-          onBarcodeScanned={lookedUp ? undefined : handleNativeBarcode}
+          onBarcodeScanned={armed && !lookedUp ? handleNativeBarcode : undefined}
         />
       ) : (
         <View style={styles.noCamFill}>
-          <Text style={styles.noCamTitle}>Type the bottle number</Text>
-          <Text style={styles.noCamSub}>Camera is off. The number on the bottle still works.</Text>
-          {permission && !permission.granted ? (
+          <Text style={styles.noCamTitle}>{lookedUp ? 'Camera paused' : 'Type the bottle number'}</Text>
+          <Text style={styles.noCamSub}>
+            {lookedUp
+              ? 'Scan again to turn the camera back on.'
+              : 'Camera is off until you open Scan. The number on the bottle still works.'}
+          </Text>
+          {permission && !permission.granted && focused ? (
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Grant camera permission" style={styles.grantBtn} onPress={requestPermission}>
               <Text style={styles.btnText}>Try Camera</Text>
             </TouchableOpacity>
@@ -195,16 +266,22 @@ export default function ScanScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.resultKicker}>Not in the hospital notebook</Text>
-                  <Text style={styles.resultTitle}>{lastData}</Text>
-                  <Text style={styles.resultMeta}>Create it, or scan again. Dashes and extra zeros still match.</Text>
+                  <Text style={styles.resultKicker}>{webHint ? `From ${webHint.sourceLabel}` : 'Not in the hospital notebook'}</Text>
+                  <Text style={styles.resultTitle}>{webHint?.drugName || lastData}</Text>
+                  <Text style={styles.resultMeta}>
+                    {webHint
+                      ? [webHint.manufacturer, webHint.genericName, webHint.concentration].filter(Boolean).join(' · ') || lastData
+                      : 'No public catalog hit. Create it, or scan again.'}
+                  </Text>
                   <TouchableOpacity
                     accessibilityRole="button"
                     accessibilityLabel="Create new item from this barcode"
-                    style={styles.resultBtn}
-                    onPress={() => router.replace({ pathname: '/add', params: { barcode: lastData } })}
+                    accessibilityState={{ busy: webBusy, disabled: webBusy }}
+                    style={[styles.resultBtn, webBusy && styles.shutterBusy]}
+                    onPress={goCreate}
+                    disabled={webBusy}
                   >
-                    <Text style={styles.btnText}>Create</Text>
+                    <Text style={styles.btnText}>{webBusy ? 'Searching…' : webHint ? 'Create with these details' : 'Create'}</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -217,12 +294,12 @@ export default function ScanScreen() {
               <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityLabel="Read barcode now"
-                accessibilityState={{ busy: capturing }}
-                style={[styles.shutter, capturing && styles.shutterBusy]}
-                onPress={isWeb ? captureNow : () => setStatus('Hold the bars inside the frame — this phone reads them by itself')}
+                accessibilityState={{ busy: capturing || armed }}
+                style={[styles.shutter, (capturing || armed) && styles.shutterBusy]}
+                onPress={captureNow}
                 disabled={capturing}
               >
-                <Text style={styles.shutterText}>{capturing ? 'Reading…' : 'Read barcode'}</Text>
+                <Text style={styles.shutterText}>{capturing || armed ? 'Reading…' : 'Read barcode'}</Text>
               </TouchableOpacity>
               {isWeb ? (
                 <TouchableOpacity
