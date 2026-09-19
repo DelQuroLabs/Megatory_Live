@@ -12,6 +12,8 @@ name: Probe backend API
 # cannot mutate inventory on the server.
 
 on:
+  push:
+    branches: [arena/01a0b59d-megatory-live]
   workflow_dispatch:
     inputs:
       base_url:
