@@ -15,8 +15,9 @@ import {
   KioskRegistration,
   KioskPerson,
 } from '../lib/kiosk/session';
-import { joinNotebook, openNewNotebook, pushNotebook } from '../lib/kiosk/notebook';
+import { openHospitalNotebook, pushNotebook } from '../lib/kiosk/notebook';
 import { loadCachedInventory, loadMeta, saveInventory, saveMeta } from '../lib/storage/inventoryStorage';
+import { InventoryItem } from '../lib/domain/inventory';
 
 type Props = { children: React.ReactNode };
 
@@ -79,8 +80,25 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [allowLocal, setAllowLocal] = useState(false);
 
-  const submit = async () => {
+  const finish = async (code: string, blobId: string, items: InventoryItem[], localOnly: boolean) => {
+    const registered = await registerClock({ hospitalCode: code, clockName: clockName.trim(), sitePin: pin, blobId });
+    if (items.length) await saveInventory(items, { localOnly: true });
+    else {
+      const cached = await loadCachedInventory();
+      if (cached.length && !localOnly) await pushNotebook(registered, cached);
+    }
+    const meta = await loadMeta();
+    await saveMeta({ ...meta, deviceName: clockName.trim(), hospitalCode: code });
+    if (typeof window !== 'undefined' && window.history?.replaceState) {
+      const next = kioskUrl(window.location.origin, { hospitalCode: code, blobId });
+      window.history.replaceState({}, '', next);
+    }
+    onDone();
+  };
+
+  const submit = async (forceLocal = false) => {
     const code = normalizeHospital(hospital);
     if (code.length < 3) { setError('Hospital code is the short name (e.g. OAKVW)'); return; }
     if (clockName.trim().length < 2) { setError('Name this clock (e.g. Pharmacy iPad)'); return; }
@@ -88,26 +106,15 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError('');
     try {
-      let blobId = invite.blobId || '';
-      if (blobId) {
-        const items = await joinNotebook(blobId, code, pin);
-        await registerClock({ hospitalCode: code, clockName: clockName.trim(), sitePin: pin, blobId });
-        await saveInventory(items, { localOnly: true });
-      } else {
-        blobId = await openNewNotebook({ hospitalCode: code, sitePin: pin });
-        const registered = await registerClock({ hospitalCode: code, clockName: clockName.trim(), sitePin: pin, blobId });
-        const cached = await loadCachedInventory();
-        if (cached.length) await pushNotebook(registered, cached);
+      if (forceLocal) {
+        await finish(code, `local:${Date.now()}`, [], true);
+        return;
       }
-      const meta = await loadMeta();
-      await saveMeta({ ...meta, deviceName: clockName.trim(), hospitalCode: code });
-      if (typeof window !== 'undefined' && window.history?.replaceState) {
-        const next = kioskUrl(window.location.origin, { hospitalCode: code, blobId });
-        window.history.replaceState({}, '', next);
-      }
-      onDone();
+      const opened = await openHospitalNotebook({ hospitalCode: code, sitePin: pin });
+      await finish(code, opened.blobId, opened.items, false);
     } catch (e: any) {
-      setError(e?.message || 'Could not reach the hospital notebook. Check the internet and try again.');
+      setAllowLocal(true);
+      setError(e?.message || 'Could not reach the hospital notebook. Check Wi‑Fi and try again, or continue on this clock only.');
     } finally {
       setBusy(false);
     }
@@ -119,8 +126,8 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
       <Text style={styles.title}>{joining ? 'Join this hospital clock' : 'Register this clock'}</Text>
       <Text style={styles.sub}>
         {joining
-          ? 'Same site PIN as the other clock. Then every phone shares one notebook.'
-          : 'Like Dayforce WebClock: hospital code, clock name, site PIN. Other phones copy the Files link (not just the printed app QR) and type the same PIN. Already have a clock? Open that clock’s link instead of registering a second notebook.'}
+          ? 'Same hospital code and site PIN as the other clock. Then every phone shares one notebook.'
+          : 'Like Dayforce WebClock: hospital code, clock name, site PIN. Other phones type the same hospital code and PIN — that opens the same notebook.'}
       </Text>
 
       <Text style={styles.label}>Hospital code</Text>
@@ -155,11 +162,22 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
         accessibilityLabel={joining ? 'Join clock' : 'Register clock'}
         accessibilityState={{ busy }}
         style={[styles.primary, busy && styles.disabled]}
-        onPress={submit}
+        onPress={() => submit(false)}
         disabled={busy}
       >
         <Text style={styles.primaryText}>{busy ? 'Connecting…' : joining ? 'Join clock' : 'Register clock'}</Text>
       </TouchableOpacity>
+      {allowLocal ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Continue on this clock only"
+          style={styles.linkBtn}
+          onPress={() => submit(true)}
+          disabled={busy}
+        >
+          <Text style={styles.linkText}>Continue on this clock only</Text>
+        </TouchableOpacity>
+      ) : null}
     </ScrollView>
   );
 }

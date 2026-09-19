@@ -10,6 +10,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 jest.mock('../lib/kiosk/notebook', () => ({
+  openHospitalNotebook: jest.fn(async () => ({ blobId: 'blob-test-1', items: [] })),
   openNewNotebook: jest.fn(async () => 'blob-test-1'),
   joinNotebook: jest.fn(async () => []),
   pullNotebook: jest.fn(async () => []),

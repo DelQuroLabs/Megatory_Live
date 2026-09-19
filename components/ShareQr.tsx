@@ -33,7 +33,7 @@ export function ShareQr() {
     <View style={styles.card} accessibilityLabel={`QR code to open Megatory Live at ${url}`}>
       <Text style={styles.title}>📲 Open on another clock</Text>
       <Text style={styles.desc}>
-        Point any phone camera at this square, or copy the link. They enter the same site PIN and share the hospital notebook — not a separate clipboard on each phone.
+        Other clocks type the same hospital code and site PIN. That is the notebook key — every clock writes the same COUNT.
       </Text>
       <View style={styles.qrWrap}>
         {Platform.OS === 'web'

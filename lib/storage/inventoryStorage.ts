@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { InventoryItem } from '../domain/inventory';
 import { loadRegistration } from '../kiosk/session';
 import { pullNotebook, pushNotebook } from '../kiosk/notebook';
+import { isLocalNotebook } from '../kiosk/cloud';
 
 /**
  * Storage keys are namespaced `megatory_live_*` (the product name).
@@ -71,7 +72,7 @@ export async function loadInventory(): Promise<InventoryItem[]> {
   try {
     await migrateLegacyStorage();
     const reg = await loadRegistration();
-    if (reg?.blobId && reg.sitePin) {
+    if (reg?.blobId && reg.sitePin && !isLocalNotebook(reg.blobId)) {
       try {
         const remote = await pullNotebook(reg);
         await AsyncStorage.setItem(KEY, JSON.stringify(remote));
@@ -94,7 +95,7 @@ export async function saveInventory(items: InventoryItem[], opts?: { localOnly?:
   await AsyncStorage.setItem(META_KEY, JSON.stringify({ ...meta, totalCounts: items.length }));
   if (opts?.localOnly) return;
   const reg = await loadRegistration();
-  if (reg?.blobId && reg.sitePin) {
+  if (reg?.blobId && reg.sitePin && !isLocalNotebook(reg.blobId)) {
     try {
       await pushNotebook(reg, items);
     } catch (e) {

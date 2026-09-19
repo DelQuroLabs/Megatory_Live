@@ -43,11 +43,11 @@ Counts do **not** live only on each phone. Think of a shared classroom notebook:
 
 **Register (Dayforce WebClock-style):**
 1. First clock: hospital code (namespace), clock name, 4–8 digit site PIN.
-2. That clock opens the hospital notebook. Files → Copy link (includes `?ns=` and `?nb=`).
-3. Other phones open that link, type the **same** site PIN, name their clock.
+2. That clock opens the hospital notebook. Other phones type the **same hospital code and PIN**.
+3. Files → Copy link is optional; hospital + PIN is the notebook key.
 4. Each person types their name (who is counting), then scans. Lock when they walk away.
 
-The printed app QR still opens the site. **Joining the same notebook needs the Copy link**, not only the printed QR — otherwise a second clock would start a second notebook.
+The printed app QR still opens the site. Same hospital code + site PIN opens the same notebook. If the notebook host is unreachable, **Continue on this clock only** lets you count locally.
 
 **Excel:**
 - Import the hospital `MEGATORY_…3Q2026` file once (it lands in the shared notebook).

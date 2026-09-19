@@ -78,7 +78,7 @@ served at a **domain root**, not a sub-path.
 
 ## 3b. Hospital notebook (live on Pages, no Traefik)
 
-GitHub Pages cannot `POST /api`. The kiosk therefore stores the shared COUNT as a PIN-encrypted blob (jsonblob) whose id is in the clock’s join URL (`?ns=` hospital, `?nb=` notebook id). The SPA never embeds a GitHub token.
+GitHub Pages cannot `POST /api`. jsonblob.com now rejects anonymous writes (401), which browsers surface as **Failed to fetch**. The kiosk therefore publishes a PIN-encrypted notebook as a retained MQTT message. Hospital code + site PIN select the topic. The SPA never embeds a GitHub token.
 
 - First clock creates the blob; Files → Copy link is how other clocks join.
 - Wrong PIN cannot decrypt.
