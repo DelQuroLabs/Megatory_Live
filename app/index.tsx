@@ -9,6 +9,7 @@ export default function InventoryScreen() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [search, setSearch] = useState('');
   const [filterLocation, setFilterLocation] = useState<string>('All');
+  const [showUncounted, setShowUncounted] = useState(false);
   const [deviceName, setDeviceName] = useState('Phone');
 
   const refresh = useCallback(async () => {
@@ -23,13 +24,14 @@ export default function InventoryScreen() {
 
   const filtered = items.filter(i => {
     const s = search.toLowerCase();
-    const matchesSearch = !s || i.drugName.toLowerCase().includes(s) || i.genericName.toLowerCase().includes(s) || i.barcode.includes(s) || i.manufacturer.toLowerCase().includes(s);
-    const matchesLocation = filterLocation === 'All' || i.location === filterLocation;
-    return matchesSearch && matchesLocation;
+    const matchesSearch = !s || i.drugName.toLowerCase().includes(s) || i.genericName.toLowerCase().includes(s) || i.barcode.includes(s) || i.manufacturer.toLowerCase().includes(s) || (i.svpGl || '').toLowerCase().includes(s);
+    const matchesLocation = filterLocation === 'All' || i.location === filterLocation || i.svpGl === filterLocation;
+    const matchesCounted = !!s || showUncounted || (i.quantityOnHand || 0) !== 0;
+    return matchesSearch && matchesLocation && matchesCounted;
   });
 
-  const totalQty = filtered.reduce((sum, i) => sum + (i.quantityOnHand || 0), 0);
-  const locations = ['All', ...Array.from(new Set(items.map(i => i.location)))];
+  const countedCount = items.filter(i => (i.quantityOnHand || 0) !== 0).length;
+  const locations = ['All', ...Array.from(new Set(items.map(i => i.svpGl || i.location).filter(Boolean)))];
 
   const handleDelete = (id: string) => {
     Alert.alert('Delete item?', 'This will remove the item from this device count.', [
@@ -54,7 +56,7 @@ export default function InventoryScreen() {
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.drugName}>{item.drugName || 'Unnamed Drug'}</Text>
-          <Text style={styles.meta}>{item.barcode ? `${item.barcode}` : 'No barcode'} • {item.location} • {item.form}</Text>
+          <Text style={styles.meta}>{item.barcode ? `${item.barcode}` : 'No barcode'} • {item.svpGl || item.location} • {item.form}</Text>
         </View>
         <View style={styles.qtyBubble}>
           <Text style={styles.qtyText}>{item.quantityOnHand}</Text>
@@ -95,7 +97,16 @@ export default function InventoryScreen() {
     <View style={styles.container}>
       <View style={styles.topBar}>
         <View style={styles.pill}><Text style={styles.pillText}>📱 {deviceName}</Text></View>
-        <View style={styles.pill}><Text style={styles.pillText}> {items.length} items • {totalQty} units</Text></View>
+        <View style={styles.pill}><Text style={styles.pillText}> {countedCount} counted • {items.length} in sheet</Text></View>
+        <TouchableOpacity
+          style={[styles.pill, showUncounted && styles.pillActive]}
+          onPress={() => setShowUncounted(v => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: showUncounted }}
+          accessibilityLabel={showUncounted ? 'Showing all catalog items (selected)' : 'Show all catalog items including uncounted'}
+        >
+          <Text style={[styles.pillText, showUncounted && styles.pillTextActive]}>{showUncounted ? 'All items' : 'Counted only'}</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchWrap}>
@@ -137,8 +148,8 @@ export default function InventoryScreen() {
       {filtered.length === 0 ? (
         <View style={styles.empty}>
           <View style={styles.emptyBlob}><Text style={{ fontSize: 40 }}>📦</Text></View>
-          <Text style={styles.emptyTitle}>No stock yet</Text>
-          <Text style={styles.emptyText}>Scan a bottle or add manually. Fast, offline quarterly count</Text>
+          <Text style={styles.emptyTitle}>{items.length ? 'Nothing counted yet' : 'No stock yet'}</Text>
+          <Text style={styles.emptyText}>{items.length ? `${items.length} items are waiting in the hospital sheet. Scan or search to start filling COUNT.` : 'Scan a bottle or add manually. Fast, offline quarterly count'}</Text>
           <View style={styles.emptyActions}>
             <Link href="/scan" asChild>
               <TouchableOpacity style={styles.primaryBtn} accessibilityRole="button" accessibilityLabel="Scan a bottle barcode">
@@ -161,9 +172,11 @@ export default function InventoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F8FB' },
-  topBar: { flexDirection: 'row', gap: 8, padding: 12, paddingHorizontal: 16 },
+  topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12, paddingHorizontal: 16 },
   pill: { backgroundColor: 'white', borderWidth: 1, borderColor: '#DCE8F0', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  pillActive: { backgroundColor: '#15284C', borderColor: '#15284C' },
   pillText: { fontSize: 11, fontWeight: '800', color: '#475569' },
+  pillTextActive: { color: 'white' },
   searchWrap: { marginHorizontal: 16, marginBottom: 12, backgroundColor: 'white', borderRadius: 999, borderWidth: 1.5, borderColor: '#DCE8F0', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
   searchIcon: { fontSize: 16, marginRight: 8, opacity: 0.6 },
   searchInput: { flex: 1, paddingVertical: 14, fontSize: 15, fontWeight: '600', color: '#15284C' },

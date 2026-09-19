@@ -1,6 +1,15 @@
-import { createEmptyItem, itemToTemplateRow, templateRowToItem, mergeInventories, validateItem, TEMPLATE_COLUMNS, matchToTemplate } from '../lib/domain/inventory';
+import { createEmptyItem, itemToTemplateRow, templateRowToItem, mergeInventories, validateItem, TEMPLATE_COLUMNS, matchToTemplate, parseQuantity } from '../lib/domain/inventory';
 
 describe('Inventory Domain', () => {
+  test('parseQuantity understands hospital fractions and money leftovers', () => {
+    const { parseQuantity } = require('../lib/domain/inventory');
+    expect(parseQuantity('1.75')).toBe(1.75);
+    expect(parseQuantity('0.33')).toBe(0.33);
+    expect(parseQuantity('$31.65')).toBe(31.65);
+    expect(parseQuantity('$-')).toBe(0);
+    expect(parseQuantity('')).toBe(0);
+  });
+
   test('createEmptyItem generates id and defaults', () => {
     const item = createEmptyItem({ drugName: 'TestDrug' });
     expect(item.drugName).toBe('TestDrug');
@@ -29,6 +38,21 @@ describe('Inventory Domain', () => {
     expect(item.barcode).toBe('12345');
     expect(item.drugName).toBe('Meloxicam');
     expect(item.quantityOnHand).toBe(10);
+  });
+
+  test('templateRowToItem keeps fractional COUNT and LOG #1 from the hospital master', () => {
+    const item = templateRowToItem({
+      'SVP GL': 'Pharmacy Injectable',
+      'ITEM DESCRIPTION': 'Alfaxan 10mL',
+      'MANUFACTURER NUMBER': '10026696',
+      'COUNT': '1.75',
+      'PACK UNITS': '10.00',
+      'LOG #1': '12',
+    });
+    expect(item.quantityOnHand).toBe(1.75);
+    expect(item.packUnits).toBe('10.00');
+    expect(item.log1).toBe('12');
+    expect(item.svpGl).toBe('Pharmacy Injectable');
   });
 
   test('mergeInventories adds quantities by barcode', () => {

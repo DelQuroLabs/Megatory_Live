@@ -24,6 +24,7 @@ const META_KEY = STORAGE_KEYS.meta;
 
 export interface StorageMeta {
   deviceName: string;
+  hospitalCode?: string;
   lastExportAt?: string;
   totalCounts: number;
 }

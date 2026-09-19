@@ -31,10 +31,12 @@ node scripts/validate_records.cjs   # validate artifacts/ against schemas/
 
 ## Template Structure
 
-16 columns, exact order:
-`SKU | MANUFACTURER | MANUFACTURER NUMBER | ITEM DESCRIPTION | PACK PRICE | PACK TYPE | PACK UNIT | COUNT TYPE | COUNT (editable) | ITEM PRICE | VALUE ON HAND | LOG 1 | LOG 2 | LOG 3 | LOG 4 | LOG 5`
+Three tabs matching `MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx`: **Instructions**, **INVENTORY SHEET**, **CATEGORIES**.
 
-Export includes second sheet "Instructions" explaining locked vs editable.
+INVENTORY SHEET columns:
+`SVP GL | MANUFACTURER | MANUFACTURER NUMBER | ITEM DESCRIPTION | PACK PRICE | PACK TYPE | PACK UNITS | COUNT TYPE | COUNT (editable, fractions OK) | ITEM PRICE | VALUE ON HAND | LOG #1 | LOG #2 | LOG #3 | LOG #4 | LOG #5`
+
+Filename: `MEGATORY_<HospitalCode>_3Q2026.xlsx`.
 
 Sample file: `assets/sample-vet-inventory.xlsx`
 
@@ -130,7 +132,7 @@ The previous records over-claimed. Specifically:
 
 ## Next: Match Your Exact Template
 
-The supplied master image is now reflected 1:1 in `TEMPLATE_COLUMNS`; `COUNT` is the editable count field.
+The Q3-2026 hospital workbook (`MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx`) is now the export layout: three tabs, `PACK UNITS`, `LOG #1`, fractional COUNT, and write-in rows.
 
 ## License
 

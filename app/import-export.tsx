@@ -5,7 +5,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useFocusEffect } from 'expo-router';
 import { loadInventory, saveInventory, loadMeta, saveMeta, clearInventory } from '../lib/storage/inventoryStorage';
-import { generateExcelBuffer, parseExcelBuffer, downloadExcel } from '../lib/storage/excel';
+import { generateExcelBuffer, parseExcelBuffer, downloadExcel, megatoryExportFilename } from '../lib/storage/excel';
 import { InventoryItem, mergeInventories } from '../lib/domain/inventory';
 import { ensureDir, listManagedFiles, deleteManagedFile, shareManagedFile, saveFileToManaged, arrayBufferToBase64, ManagedFile, formatFileSize } from '../lib/storage/fileManager';
 import { BACKEND_BASE_URL } from '../lib/backend/config';
@@ -14,6 +14,7 @@ import { checkBackendHealth, BackendHealth } from '../lib/backend/api';
 export default function ImportExportScreen() {
   const [status, setStatus] = useState<string>('Ready');
   const [deviceName, setDeviceName] = useState('Phone');
+  const [hospitalCode, setHospitalCode] = useState('');
   const [mergeStrategy, setMergeStrategy] = useState<'add' | 'replace'>('add');
   const [lastImport, setLastImport] = useState<{ added: number; updated: number } | null>(null);
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
@@ -34,13 +35,19 @@ export default function ImportExportScreen() {
     }
   }, []);
 
-  useEffect(() => { loadMeta().then(m => setDeviceName(m.deviceName || 'Phone')); refreshFiles(); }, [refreshFiles]);
+  useEffect(() => {
+    loadMeta().then(m => {
+      setDeviceName(m.deviceName || 'Phone');
+      setHospitalCode(m.hospitalCode || '');
+    });
+    refreshFiles();
+  }, [refreshFiles]);
   useFocusEffect(useCallback(() => { refreshFiles(); }, [refreshFiles]));
 
   const handleSaveDeviceName = async () => {
     const meta = await loadMeta();
-    await saveMeta({ ...meta, deviceName });
-    setStatus(`Device saved: ${deviceName}`);
+    await saveMeta({ ...meta, deviceName, hospitalCode });
+    setStatus(`Saved ${deviceName} / ${hospitalCode || 'no hospital code'}`);
   };
 
   const handleExport = async () => {
@@ -49,9 +56,9 @@ export default function ImportExportScreen() {
       const items = await loadInventory();
       if (items.length === 0) { Alert.alert('Nothing to export', 'Add some items first'); setStatus('No items'); return; }
       const buffer = generateExcelBuffer(items);
-      if (Platform.OS === 'web') { downloadExcel(items, `megatory-inventory-${deviceName}-${new Date().toISOString().slice(0,10)}.xlsx`); setStatus(`Exported ${items.length} items`); return; }
+      const fileName = megatoryExportFilename(hospitalCode || deviceName);
+      if (Platform.OS === 'web') { downloadExcel(items, fileName); setStatus(`Exported ${items.length} items as ${fileName}`); return; }
       await ensureDir();
-      const fileName = `megatory-inventory-${deviceName}-${new Date().toISOString().slice(0,10)}-${Date.now()}.xlsx`;
       const base64 = arrayBufferToBase64(buffer);
       const uri = await saveFileToManaged(fileName, base64);
       await refreshFiles();
@@ -113,9 +120,9 @@ export default function ImportExportScreen() {
   const handleTemplateDownload = async () => {
     try {
       const buffer = generateExcelBuffer([]);
-      if (Platform.OS === 'web') { downloadExcel([], 'megatory-inventory-TEMPLATE.xlsx'); setStatus('Template downloaded'); return; }
+      const fileName = megatoryExportFilename(hospitalCode || 'TEMPLATE');
+      if (Platform.OS === 'web') { downloadExcel([], fileName); setStatus(`Template downloaded as ${fileName}`); return; }
       const base64 = arrayBufferToBase64(buffer);
-      const fileName = `megatory-template-${Date.now()}.xlsx`;
       const uri = await saveFileToManaged(fileName, base64);
       await refreshFiles();
       if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -127,14 +134,15 @@ export default function ImportExportScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 14 }}>
       <View style={[styles.card, styles.soft1]}>
         <Text style={styles.cardTitle}>📱 Device Identity</Text>
-        <Text style={styles.cardDesc}>Name this phone so merges show who counted</Text>
+        <Text style={styles.cardDesc}>Name this phone, and the hospital code used in MEGATORY_OAKVW filenames</Text>
         <TextInput style={styles.input} value={deviceName} onChangeText={setDeviceName} accessibilityLabel="Device name" placeholder="e.g. Pharmacy-iPad" placeholderTextColor="#94a3b8" />
+        <TextInput style={styles.input} value={hospitalCode} onChangeText={setHospitalCode} accessibilityLabel="Hospital code" placeholder="Hospital code e.g. OAKVW" placeholderTextColor="#94a3b8" autoCapitalize="characters" />
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Save device name" style={styles.btn} onPress={handleSaveDeviceName}><Text style={styles.btnText}>Save Device</Text></TouchableOpacity>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>⇅ Import / Export</Text>
-        <Text style={styles.cardDesc}>Only Name+Qty required. Smart matching by barcode then name 💫</Text>
+        <Text style={styles.cardDesc}>Import the hospital MEGATORY file first. Count. Export writes the same three tabs: Instructions, INVENTORY SHEET, CATEGORIES.</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Export inventory to Excel" style={[styles.btn, styles.btnPrimary]} onPress={handleExport}><Text style={styles.btnText}>📤 Export to Excel</Text></TouchableOpacity>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Import Excel or CSV inventory" style={[styles.btn, styles.btnSecondary]} onPress={handleImport}><Text style={styles.btnText}>📥 Import Excel / CSV</Text></TouchableOpacity>
         <View style={styles.pillBar}>
@@ -193,12 +201,12 @@ export default function ImportExportScreen() {
         <Text style={styles.step}>2️⃣ Export → file saved → Share</Text>
         <Text style={styles.step}>3️⃣ Collect files</Text>
         <Text style={styles.step}>4️⃣ Master: Import each with Add quantities</Text>
-        <Text style={styles.step}>5️⃣ Final Export = compiled</Text>
+        <Text style={styles.step}>5️⃣ Final Export = MEGATORY_HospitalCode_3Q2026.xlsx</Text>
       </View>
 
       <View style={[styles.card, styles.soft3]}>
         <Text style={styles.cardTitle}>📄 Template</Text>
-        <Text style={styles.cardDesc}>Need column layout? Download empty template with Instructions</Text>
+        <Text style={styles.cardDesc}>Empty Q3-2026 layout with the three hospital tabs. Better: import the real MEGATORY_HOSPITAL CODE file, then export so COUNT is filled in.</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Download empty inventory template" style={styles.btn} onPress={handleTemplateDownload}><Text style={styles.btnText}>Download Template</Text></TouchableOpacity>
       </View>
 
