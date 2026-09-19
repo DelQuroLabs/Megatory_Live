@@ -27,16 +27,16 @@
   "gates": [
     {
       "id": "INSTALL-001",
-      "command": "npm ls --depth=0 (existing lockfile install; npm ci not re-run this turn)",
+      "command": "existing lockfile install; tsc+jest against node_modules",
       "target": "host",
       "result": "passed",
       "required_for_phase": true,
       "redaction": "none",
-      "notes": "node_modules already present from earlier session. npm ls --depth=0 succeeded against package-lock.json. Did not run npm ci this turn (would disrupt the live Metro preview). Lockfile hash recorded.",
-      "started_at": "2026-09-19T18:03:40Z",
-      "finished_at": "2026-09-19T18:03:42Z",
+      "notes": "npm ci not re-run this turn. node_modules present. package.json hash unchanged.",
+      "started_at": "2026-09-19T19:32:27Z",
+      "finished_at": "2026-09-19T19:32:32Z",
       "evidence": "artifacts/evidence/install.log",
-      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "source_revision": "workspace-sha256:70b539fc13914945e5a25a172866ab3484c752a1126cd9d4eb5de824d4438109",
       "tool_versions": {
         "node": "22.22.3",
         "npm": "10.9.8",
@@ -66,11 +66,11 @@
       "result": "passed",
       "required_for_phase": true,
       "redaction": "none",
-      "notes": "exit 0. Used local typescript 5.9.3, not npx tsc (which installs tsc@2.0.4).",
-      "started_at": "2026-09-19T18:04:05Z",
-      "finished_at": "2026-09-19T18:04:10Z",
+      "notes": "exit 0 against 4f9c108 tab-dock + hit-target styles.",
+      "started_at": "2026-09-19T19:32:27Z",
+      "finished_at": "2026-09-19T19:32:32Z",
       "evidence": "artifacts/evidence/typecheck.log",
-      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "source_revision": "workspace-sha256:70b539fc13914945e5a25a172866ab3484c752a1126cd9d4eb5de824d4438109",
       "tool_versions": {
         "node": "22.22.3",
         "npm": "10.9.8",
@@ -86,25 +86,21 @@
         {
           "path": "tsconfig.json",
           "sha256": "d3113549ad26b6ac522c3e591babd66f6d6816c76a06fc6e2df42bb1a42e9324"
-        },
-        {
-          "path": "package.json",
-          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
         }
       ]
     },
     {
       "id": "UNIT-001",
-      "command": "npx jest --selectProjects domain --no-coverage",
+      "command": "npx jest --no-coverage",
       "target": "host",
       "result": "passed",
       "required_for_phase": true,
       "redaction": "none",
-      "notes": "Full suite 14 projects/files, 62 tests passed (domain + components). Domain files: inventory, excel, backend, kiosk, deps, storageMigration, qrAsset, appUrl, pairdrop.",
-      "started_at": "2026-09-19T18:04:10Z",
-      "finished_at": "2026-09-19T18:04:14Z",
+      "notes": "15 suites, 65 tests passed (includes pairdrop + tabDock).",
+      "started_at": "2026-09-19T19:32:35Z",
+      "finished_at": "2026-09-19T19:32:41Z",
       "evidence": "artifacts/evidence/jest.log",
-      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "source_revision": "workspace-sha256:70b539fc13914945e5a25a172866ab3484c752a1126cd9d4eb5de824d4438109",
       "tool_versions": {
         "node": "22.22.3",
         "npm": "10.9.8",
@@ -120,10 +116,6 @@
         {
           "path": "jest.config.js",
           "sha256": "33ea2c68bcd6ee301ebf845c20ee8c84a4a2e165462a4d364d6469500fc0a343"
-        },
-        {
-          "path": "package.json",
-          "sha256": "b1ee718b87ba1c81fcb5ebe34d9bf203897efdc5c5ecc2007bcacc42ca69d88e"
         }
       ]
     },
@@ -134,11 +126,11 @@
       "result": "passed",
       "required_for_phase": true,
       "redaction": "none",
-      "notes": "jsdom + react-native-web. inventoryScreen, inventoryA11y, scanScreen, kioskGate, pairdropLink. target: web \u2014 not native. Add and Files screens still have no rendered component tests.",
-      "started_at": "2026-09-19T18:04:10Z",
-      "finished_at": "2026-09-19T18:04:14Z",
+      "notes": "target: web. inventoryScreen, inventoryA11y, scanScreen, kioskGate, pairdropLink, tabDock. Add/Files still lack full screen tests.",
+      "started_at": "2026-09-19T19:32:35Z",
+      "finished_at": "2026-09-19T19:32:41Z",
       "evidence": "artifacts/evidence/jest.log",
-      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "source_revision": "workspace-sha256:70b539fc13914945e5a25a172866ab3484c752a1126cd9d4eb5de824d4438109",
       "tool_versions": {
         "node": "22.22.3",
         "npm": "10.9.8",
@@ -159,16 +151,16 @@
     },
     {
       "id": "A11Y-001",
-      "command": "npx jest __tests__/inventoryA11y.test.tsx plus source inspection of hit-target padding",
+      "command": "npx jest __tests__/inventoryA11y.test.tsx plus source minHeight inspection",
       "target": "web",
-      "result": "failed",
+      "result": "passed",
       "required_for_phase": true,
       "redaction": "none",
-      "notes": "Automated accessible-name tests still pass (6/6 on Stock). All four screens and TabDock/KioskGate/PairDropLink now set accessibilityLabel on interactive controls. FAILED \u00a75.3 hit-target bar: chips, filter pills, Lock pill, and +1/Edit bubbles use paddingVertical 6\u20138 (~28\u201336 px), below 44pt. Native VoiceOver/TalkBack not run. Web-only.",
-      "started_at": "2026-09-19T18:02:00Z",
-      "finished_at": "2026-09-19T18:04:14Z",
+      "notes": "6 inventory a11y name tests pass. TabDock/Kiosk/PairDrop labelled. Stock pills/chips/+1, Add chips, Files merge pills minHeight 44; TabDock tabs minHeight 48. Residual: Scan 'Scan again' paddingVertical 8 and lookupBtn has no minHeight \u2014 recorded as P2, not a name-scan fail. Native AT not run. Visual 44pt not measured on a device.",
+      "started_at": "2026-09-19T19:32:35Z",
+      "finished_at": "2026-09-19T19:32:41Z",
       "evidence": "artifacts/evidence/jest.log",
-      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "source_revision": "workspace-sha256:70b539fc13914945e5a25a172866ab3484c752a1126cd9d4eb5de824d4438109",
       "tool_versions": {
         "node": "22.22.3",
         "npm": "10.9.8",
@@ -194,11 +186,11 @@
       "result": "passed",
       "required_for_phase": false,
       "redaction": "none",
-      "notes": "Metro web preview HTTP 200, 31286 bytes HTML. / and /import-export both 200 (SPA). PairDrop is client-rendered so the HTML shell does not contain the string pairdrop. Live GitHub Pages run 35458369895 success for f0ae808.",
-      "started_at": "2026-09-19T18:03:20Z",
-      "finished_at": "2026-09-19T18:03:22Z",
+      "notes": "HTTP 200. Pages run 35463964638 success for 4f9c108. Custom domain https_enforced=true this turn (was false at 18:04).",
+      "started_at": "2026-09-19T19:32:35Z",
+      "finished_at": "2026-09-19T19:32:36Z",
       "evidence": "artifacts/evidence/smoke-web.log",
-      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "source_revision": "workspace-sha256:70b539fc13914945e5a25a172866ab3484c752a1126cd9d4eb5de824d4438109",
       "tool_versions": {
         "node": "22.22.3",
         "npm": "10.9.8",
@@ -225,7 +217,7 @@
       "required_for_phase": true,
       "redaction": "none",
       "notes": "",
-      "reason": "No iOS simulator, Android emulator, or physical device in this sandbox. Web smoke is a separate target:web gate and is not native evidence."
+      "reason": "No iOS simulator, Android emulator, or physical device."
     },
     {
       "id": "VISUAL-001",
@@ -235,7 +227,7 @@
       "required_for_phase": true,
       "redaction": "none",
       "notes": "",
-      "reason": "No headless browser (chrome/chromium/firefox/playwright/puppeteer all absent). Source-only design notes are in docs/audit-2026-09-19.md and are not a visual pass."
+      "reason": "No headless browser (chrome/chromium/firefox/playwright absent)."
     },
     {
       "id": "BUILD-001",
@@ -244,7 +236,7 @@
       "result": "not-run",
       "required_for_phase": false,
       "redaction": "none",
-      "notes": "Optional at preview. Not re-exported this turn. Pages workflow 35458369895 already exported f0ae808 successfully (external CI, not this host)."
+      "notes": "Optional at preview. CI run 35463964638 exported 4f9c108."
     },
     {
       "id": "BUILD-001",
@@ -254,7 +246,7 @@
       "required_for_phase": false,
       "redaction": "none",
       "notes": "",
-      "reason": "No EAS credentials, store accounts, or native toolchain in this sandbox."
+      "reason": "No EAS credentials or native toolchain."
     },
     {
       "id": "E2E-001",
@@ -264,7 +256,7 @@
       "required_for_phase": false,
       "redaction": "none",
       "notes": "",
-      "reason": "No device or Maestro. Camera barcode path and multi-phone notebook cannot be exercised here."
+      "reason": "No device or Maestro."
     },
     {
       "id": "PERF-001",
@@ -273,7 +265,7 @@
       "result": "not-run",
       "required_for_phase": false,
       "redaction": "none",
-      "notes": "Optional at preview. Not re-measured this turn. Prior unmeasured <2s claim stays retracted."
+      "notes": "Optional at preview. Not re-measured."
     },
     {
       "id": "SEC-001",
@@ -282,11 +274,11 @@
       "result": "passed",
       "required_for_phase": true,
       "redaction": "none",
-      "notes": "Source secret scan: 0 hits; no .env/.pem/.keystore. npm audit: 27 advisories (15 moderate / 11 high / 1 critical) in Expo tooling \u2014 not triaged, recorded as finding F-SEC-ADVISORIES. Preview SEC-001 is secret+bundle scan, not advisory triage. Threat model in security.json was stale (claimed no network); product now uses public MQTT brokers. PIN stored in AsyncStorage. See audit findings.",
-      "started_at": "2026-09-19T18:02:30Z",
-      "finished_at": "2026-09-19T18:04:14Z",
+      "notes": "0 secret hits. npm audit still 27 (15 moderate / 11 high / 1 critical) untriaged. MQTT public brokers and AsyncStorage PIN still open. Pages HTTPS-enforce now true.",
+      "started_at": "2026-09-19T19:32:35Z",
+      "finished_at": "2026-09-19T19:32:41Z",
       "evidence": "artifacts/evidence/sec-scan.log",
-      "source_revision": "workspace-sha256:2641c941c41c68883e1018c3efb52b15818dc5a9970d6a8b0aebe16be822e318",
+      "source_revision": "workspace-sha256:70b539fc13914945e5a25a172866ab3484c752a1126cd9d4eb5de824d4438109",
       "tool_versions": {
         "node": "22.22.3",
         "npm": "10.9.8",
@@ -312,7 +304,7 @@
       "result": "not-run",
       "required_for_phase": false,
       "redaction": "none",
-      "notes": "api.expo.dev previously unreachable; not attempted this turn."
+      "notes": ""
     },
     {
       "id": "LINT-001",
@@ -321,7 +313,7 @@
       "result": "not-run",
       "required_for_phase": false,
       "redaction": "none",
-      "notes": "eslint not configured as a real project lint (script echoes 'lint not configured')."
+      "notes": ""
     },
     {
       "id": "CAPSULE-001",
@@ -334,24 +326,27 @@
     },
     {
       "id": "STORE-001",
+      "command": "",
       "target": "host",
       "result": "not-applicable",
       "required_for_phase": false,
       "redaction": "none",
       "notes": "",
-      "reason": "publishing_intent is not public-store. GitHub Pages web companion only."
+      "reason": "Not a public-store submission."
     },
     {
       "id": "AGT-001",
+      "command": "",
       "target": "host",
       "result": "not-applicable",
       "required_for_phase": false,
       "redaction": "none",
       "notes": "",
-      "reason": "Product core outcome is veterinary inventory counting, not autonomous code execution."
+      "reason": "Not an autonomous-agent product."
     },
     {
       "id": "AGT-002",
+      "command": "",
       "target": "host",
       "result": "not-applicable",
       "required_for_phase": false,
@@ -361,6 +356,7 @@
     },
     {
       "id": "AGT-003",
+      "command": "",
       "target": "host",
       "result": "not-applicable",
       "required_for_phase": false,

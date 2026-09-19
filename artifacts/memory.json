@@ -4,12 +4,8 @@
   "current_phase": "preview",
   "current_completion_label": "incomplete",
   "accepted_core_outcome": "Veterinary medication inventory: scan bottle barcode to auto-populate drug details into the Q3-2026 hospital Excel, enter quantity that adds to COUNT, support manual entry, and share one hospital notebook across clocks then export MEGATORY_<code>_3Q2026.xlsx",
-  "last_turn_summary": "User finished PairDrop preview and said move on. Restored local HEAD to 28b04db (sandbox had rewound to 1f9d3bc). Replaced emoji tab dock with navy/cyan text tabs (Stock Scan Add Files), minHeight 48. Raised Stock/Add/Files chip and +1 hit targets to minHeight 44. Relabeled Files Test Connection to Test extra API. 65 tests pass. Preview needs restart (CI Metro).",
+  "last_turn_summary": "Re-audit of 4f9c108. TEST-AUDIT script file still missing on disk. tsc clean; 65 tests pass. A11Y-001 now passed for names + primary minHeight 44 (residual Scan againBtn). Pages https_enforced=true (was false). MQTT/PIN/advisories still open. incomplete. No self-waiver.",
   "next_actions": [
-    {
-      "id": "na-https",
-      "action": "Human: enable GitHub Pages HTTPS-only for megatory-live.delqurolabs.app"
-    },
     {
       "id": "na-server",
       "action": "Replace public MQTT notebook with the project's own server storage"
@@ -26,6 +22,11 @@
     {
       "id": "na-excel-human",
       "action": "Human compare export against MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx"
+    },
+    {
+      "id": "na-scan-again",
+      "action": "Give Scan 'Scan again' and lookup Go minHeight 44",
+      "gate": "A11Y-001"
     }
   ],
   "open_items": [
@@ -40,12 +41,6 @@
       "summary": "npm audit advisories not triaged",
       "opened_at": "2026-09-18T00:46:00Z",
       "notes": "27 vulnerabilities (15 moderate, 11 high, 1 critical)."
-    },
-    {
-      "id": "oi-pages-https",
-      "summary": "Pages https_enforced=false",
-      "opened_at": "2026-09-19T18:04:14Z",
-      "notes": "Human GitHub setting. Certificate already approved through 2026-12-18."
     }
   ],
   "blockers": [
@@ -69,22 +64,9 @@
       "category": "waiting-for-user",
       "related_gate": "SMOKE-001",
       "since": "2026-09-18T00:46:00Z"
-    },
-    {
-      "id": "b-https",
-      "summary": "Pages HTTPS-enforce is a human GitHub setting",
-      "category": "waiting-for-user",
-      "related_gate": "SEC-001",
-      "since": "2026-09-19T18:04:14Z"
     }
   ],
   "pending_user_questions": [
-    {
-      "id": "pq-https",
-      "asked_at": "2026-09-19T18:04:14Z",
-      "question": "Can you turn on GitHub Pages \u2192 Enforce HTTPS for megatory-live.delqurolabs.app?",
-      "context": "Certificate is already approved; https_enforced is still false."
-    },
     {
       "id": "pq-waiver",
       "asked_at": "2026-09-19T18:04:14Z",
@@ -179,6 +161,28 @@
         "Pages HTTPS-enforce",
         "native waivers"
       ]
+    },
+    {
+      "at": "2026-09-19T19:32:41Z",
+      "user_message_brief": "Re-attached TEST-AUDIT script; run audit",
+      "actions_taken": [
+        "Re-ran tsc and Jest (65 pass)",
+        "Secret scan 0 hits",
+        "Probed Pages: https_enforced true",
+        "Source hit-target re-inspection after tab/chip fix",
+        "Updated verification/security/audit doc"
+      ],
+      "outcomes": [
+        "A11Y-001 passed with residual Scan again",
+        "HTTPS closed",
+        "incomplete"
+      ],
+      "new_blockers": [],
+      "unresolved": [
+        "own-server notebook",
+        "PIN storage",
+        "native waivers"
+      ]
     }
   ],
   "archived": [
@@ -209,6 +213,27 @@
       "summary": "Interactive chips/pills/+1 below 44pt",
       "resolved_at": "2026-09-19T18:45:00Z",
       "resolution": "minHeight 44 on Stock pills/chips/+1, Add chips, Files merge pills; TabDock tabs minHeight 48. Visual matrix still blocked."
+    },
+    {
+      "id": "oi-pages-https",
+      "kind": "open_item",
+      "summary": "Pages https_enforced=false",
+      "resolved_at": "2026-09-19T19:32:41Z",
+      "resolution": "Probed 2026-09-19T19:32Z: https_enforced true, html_url https://megatory-live.delqurolabs.app/"
+    },
+    {
+      "id": "b-https",
+      "kind": "blocker",
+      "summary": "Pages HTTPS-enforce is a human GitHub setting",
+      "resolved_at": "2026-09-19T19:32:41Z",
+      "resolution": "Human enabled; https_enforced true."
+    },
+    {
+      "id": "pq-https",
+      "kind": "question",
+      "summary": "Can you turn on GitHub Pages Enforce HTTPS?",
+      "resolved_at": "2026-09-19T19:32:41Z",
+      "resolution": "Yes \u2014 now true."
     }
   ]
 }

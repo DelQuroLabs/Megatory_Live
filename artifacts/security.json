@@ -8,8 +8,8 @@
   ],
   "permissions": ["CAMERA - scan medication barcodes"],
   "local_storage_protection": "AsyncStorage holds inventory cache, kiosk registration including the site PIN in plaintext JSON, and the signed-in name. Not Keychain/Keystore. Preview-phase only — production-candidate must move the PIN off AsyncStorage.",
-  "transport_security": "Notebook sync is MQTT 3.1.1 over WebSocket TLS (wss) to public brokers: broker.emqx.io:8084, broker.hivemq.com:8884, test.mosquitto.org:8081. No certificate pinning. PairDrop is a user-opened https://pairdrop.net tab. Optional backend probe is https://megatory-live.delqurolabs.app/api (manual Test Connection). Google Fonts loaded on web.",
-  "client_bundle_scan": "passed - source grep this turn 0 secret-shaped hits (artifacts/evidence/sec-scan.log). No production bundle re-exported on this host. Pages workflow 35458369895 exported f0ae808.",
+  "transport_security": "Notebook sync is MQTT 3.1.1 over WebSocket TLS (wss) to public brokers: broker.emqx.io:8084, broker.hivemq.com:8884, test.mosquitto.org:8081. No certificate pinning. PairDrop is a user-opened https://pairdrop.net tab. Optional extra-API probe is https://megatory-live.delqurolabs.app/api. Google Fonts loaded on web. GitHub Pages https_enforced=true as of 2026-09-19T19:32Z (html_url https://megatory-live.delqurolabs.app/).",
+  "client_bundle_scan": "passed - source grep this turn 0 secret-shaped hits (artifacts/evidence/sec-scan.log). Pages run 35463964638 exported 4f9c108.",
   "telemetry_review": "No analytics SDK. Counts travel to public MQTT as AES-GCM ciphertext. Topic id includes a 20-hex PIN digest.",
   "secret_scan": "passed - 0 hits; no .env, keys, or credentials committed",
   "dependency_review": "Direct deps: expo 52, @e965/xlsx 0.20.3, query-string 7.1.3. No typosquatting on names reviewed.",
@@ -19,7 +19,7 @@
     {"id": "F-SEC-MQTT", "severity": "high", "owner": "human", "status": "open - hospital notebook lives on public MQTT brokers, not the project's own server"},
     {"id": "F-SEC-PIN-STORAGE", "severity": "medium", "owner": "dev", "status": "open - site PIN stored in AsyncStorage plaintext"},
     {"id": "F-SEC-ADVISORIES", "severity": "medium", "owner": "dev", "status": "open - 27 npm audit findings untriaged"},
-    {"id": "F-SEC-PAGES-HTTP", "severity": "medium", "owner": "human", "status": "open - GitHub Pages https_enforced=false (human setting)"}
+    {"id": "F-SEC-PAGES-HTTP", "severity": "medium", "owner": "human", "status": "closed 2026-09-19 - Pages https_enforced=true, html_url is https://megatory-live.delqurolabs.app/"}
   ],
   "fixture_origin": "Synthetic - COMMON_VET_DRUGS are fictional examples, no real NDCs, no real PII",
   "user_leak_events": []

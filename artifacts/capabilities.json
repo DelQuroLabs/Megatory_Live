@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2.0",
-  "captured_at": "2026-09-19T18:04:14Z",
+  "captured_at": "2026-09-19T19:32:41Z",
   "toolchains": [
     {"name": "node", "version": "22.22.3"},
     {"name": "npm", "version": "10.9.8"},
@@ -13,5 +13,5 @@
   "network_reachability": "partial",
   "secret_manager": "unavailable",
   "store_account": "not-applicable",
-  "notes": "Web Metro preview on 0.0.0.0:8081. No Chrome/Chromium/Firefox/Playwright. No iOS/Android simulators. GitHub Actions + Pages available via gh. Pages custom domain megatory-live.delqurolabs.app, certificate approved, https_enforced=false. Latest successful deploy of this branch: Actions run 35458369895 = f0ae808."
+  "notes": "Web Metro preview on 0.0.0.0:8081. No Chrome/Playwright. No iOS/Android simulators. Pages custom domain megatory-live.delqurolabs.app, certificate approved, https_enforced=true. Latest successful deploy of this branch: Actions 35463964638 = 4f9c108."
 }
