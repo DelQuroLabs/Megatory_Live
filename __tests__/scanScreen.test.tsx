@@ -70,6 +70,7 @@ describe('ScanScreen (rendered)', () => {
     fireEvent.click(screen.getByRole('button', { name: /look up typed barcode/i }));
     expect(await screen.findByText('Alfaxan 10mL')).toBeTruthy();
     expect(screen.getByRole('button', { name: /add one alfaxan/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /scan another barcode/i })).toBeTruthy();
   });
 
   test('Read barcode uses the shutter and shows the matched drug', async () => {

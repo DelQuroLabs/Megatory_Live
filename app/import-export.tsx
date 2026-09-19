@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   fileRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#EEF6FB', borderStyle: 'dashed' },
   fileName: { fontSize: 13, fontWeight: '700', color: '#15284C' },
   fileMeta: { fontSize: 11, color: '#94a3b8', marginTop: 2, fontWeight: '600' },
-  fileBtn: { backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, marginLeft: 8 },
+  fileBtn: { backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0', paddingHorizontal: 12, paddingVertical: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999, marginLeft: 8 },
   fileBtnDelete: { backgroundColor: '#fff1f2', borderColor: '#ffe4e6' },
   fileBtnText: { fontSize: 11, fontWeight: '800', color: '#475569' },
   statusBox: { backgroundColor: '#15284C', borderRadius: 20, padding: 14, marginBottom: 14 },
