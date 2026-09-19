@@ -19,28 +19,40 @@
 ### 2. Excel Template — Locked Concept
 Your protected master file only allows editing counts. Our app generates Excel with **exact column order** designed to copy/paste:
 
+Three tabs, matching `MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx`:
+
+1. **Instructions**
+2. **INVENTORY SHEET** (the one you turn in)
+3. **CATEGORIES**
+
+INVENTORY SHEET columns:
+
 ```
-A SKU | B MANUFACTURER | C MANUFACTURER NUMBER | D ITEM DESCRIPTION | E PACK PRICE | F PACK TYPE | G PACK UNIT | H COUNT TYPE | I COUNT (EDITABLE) | J ITEM PRICE | K VALUE ON HAND | L LOG 1 | M LOG 2 | N LOG 3 | O LOG 4 | P LOG 5
+SVP GL | MANUFACTURER | MANUFACTURER NUMBER | ITEM DESCRIPTION | PACK PRICE | PACK TYPE | PACK UNITS | COUNT TYPE | COUNT (yellow, fractions OK) | ITEM PRICE | VALUE ON HAND | (spacer) | LOG #1 | LOG #2 | LOG #3 | LOG #4 | LOG #5
 ```
 
-- **Locked columns (A-O, Q-S)**: Reference only, auto-filled from scans. In your master, these would be protected.
-- **Editable column (I)**: COUNT — this is what you edit in the supplied master. Our export puts the final counts here.
-- **Instructions sheet**: Second sheet in export explains workflow.
+- **COUNT**: the yellow box. Numbers only. `1.75` bottles is OK.
+- **COUNT TYPE**: EACH or PACK/BUNDLE.
+- **LOG #1**: required for DEA / controlled items (the paper-log balance).
+- **Write-ins**: `!!SELECT GL!!` rows at the bottom of INVENTORY SHEET.
+- Save as `MEGATORY_<HospitalCode>_3Q2026.xlsx` (Oak View → `MEGATORY_OAKVW`).
 
-### 3. Import / Export / Multi-Phone Compile
+### 3. One hospital notebook (kiosk clocks)
 
-**Single phone:**
-- Count → Export → Excel file → Copy Qty column into your protected master.
+Counts do **not** live only on each phone. Think of a shared classroom notebook: every iPad is a clock; the notebook is on the server.
 
-**Multiple phones (your requested workflow):**
-1. Each person counts their area on their own phone (Pharmacy, Surgery, etc)
-2. Each phone: Import/Export → Export Current Inventory → Share file (AirDrop, email, Drive)
-3. Collect all .xlsx files on one master phone/laptop
-4. On master phone: Import/Export → Import Excel File (choose file 1) → strategy "Add quantities" → Import file 2 → Import file 3... 
-   - New items get added
-   - Existing items (same barcode) have quantities **summed**
-5. Final Export = compiled inventory of all phones
-6. Copy final Qty column into protected master template
+**Register (Dayforce WebClock-style):**
+1. First clock: hospital code (namespace), clock name, 4–8 digit site PIN.
+2. That clock opens the hospital notebook. Other phones type the **same hospital code and PIN**.
+3. Files → Copy link is optional; hospital + PIN is the notebook key.
+4. Each person types their name (who is counting), then scans. Lock when they walk away.
+
+The printed app QR still opens the site. Same hospital code + site PIN opens the same notebook. If the notebook host is unreachable, **Continue on this clock only** lets you count locally.
+
+**Excel:**
+- Import the hospital `MEGATORY_…3Q2026` file once (it lands in the shared notebook).
+- Count on any clock.
+- Export when done = `MEGATORY_<HospitalCode>_3Q2026.xlsx`.
 
 **Template import:**
 - If you already have a template file with drugs listed but no counts, Import it first, then start scanning/counting — it will populate your app with all drugs, then you just add quantities.

@@ -61,31 +61,109 @@ export interface InventoryItem {
   controlled: boolean;
   controlledSchedule?: string; // II, III, IV, V
   unit: string; // bottle, box, vial, tablet, mL
-  quantityOnHand: number; // current counted quantity
+  quantityOnHand: number; // current counted quantity — fractions allowed (1.75 bottles)
   countedBy: string; // device/person identifier
   lastCountedAt: string; // ISO timestamp
   notes: string;
+  // Columns from MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx
+  svpGl: string; // SVP GL category, e.g. "Pharmacy Rx Oral/Topical"
+  packPrice: string;
+  packUnits: string;
+  countType: string; // EACH or PACK/BUNDLE
+  itemPrice: string;
+  valueOnHand: string;
+  log1: string; // DEA log balance — required for controlled substances
+  log2: string;
+  log3: string;
+  log4: string;
+  log5: string;
 }
 
+/**
+ * Exact visible headers from MEGATORY_HOSPITAL CODE 3Q2026 FINAL.xlsx
+ * (INVENTORY SHEET, header row). A blank spacer column sits between
+ * VALUE ON HAND and LOG #1 in the real workbook; excel.ts writes that
+ * spacer so paste-alignment is preserved.
+ */
 export const TEMPLATE_COLUMNS = [
-  'SKU',
+  'SVP GL',
   'MANUFACTURER',
   'MANUFACTURER NUMBER',
   'ITEM DESCRIPTION',
   'PACK PRICE',
   'PACK TYPE',
-  'PACK UNIT',
+  'PACK UNITS',
   'COUNT TYPE',
   'COUNT',
   'ITEM PRICE',
   'VALUE ON HAND',
-  'LOG 1',
-  'LOG 2',
-  'LOG 3',
-  'LOG 4',
-  'LOG 5',
+  'LOG #1',
+  'LOG #2',
+  'LOG #3',
+  'LOG #4',
+  'LOG #5',
 ] as const;
 export type TemplateColumn = typeof TEMPLATE_COLUMNS[number];
+
+export const MASTER_SHEET_NAMES = {
+  instructions: 'Instructions',
+  inventory: 'INVENTORY SHEET',
+  categories: 'CATEGORIES',
+} as const;
+
+export const WRITE_IN_GL = '!!SELECT GL!!';
+
+/** Roll-up categories from the CATEGORIES tab of the Q3-2026 master. */
+export const SVP_GL_CATEGORIES = [
+  'Anesthesia',
+  'Boarding',
+  'Grooming',
+  'InLab',
+  'Medical Supplies',
+  'Ancillary/OTC',
+  'Radiology & Imaging',
+  'Vaccination',
+  'OutLab',
+  'Medical Equipment',
+  'Marketing',
+  'Dietary Non-Prescription',
+  'Dietary Prescription',
+  'HWFT Oral/Topical',
+  'HWFT Injectable',
+  'Pharmacy Non-Rx Oral/Topical',
+  'Pharmacy Rx Oral/Topical',
+  'Pharmacy Injectable',
+] as const;
+
+export const COUNT_TYPES = ['EACH', 'PACK/BUNDLE'] as const;
+
+/** Strip dashes/spaces and leading zeros so bottle NDC and sheet manufacturer numbers can match. */
+export function normalizeBarcode(value: string): string {
+  return String(value || '').replace(/[^0-9a-zA-Z]/g, '').replace(/^0+/, '').toLowerCase();
+}
+
+export function barcodesMatch(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const na = normalizeBarcode(a);
+  const nb = normalizeBarcode(b);
+  return !!na && na === nb;
+}
+
+export function findItemByBarcode(items: InventoryItem[], code: string): InventoryItem | undefined {
+  if (!code) return undefined;
+  return items.find(i => barcodesMatch(i.barcode, code));
+}
+
+/** Parse COUNT values like 1.75, $31.65, "$-", or blank. */
+export function parseQuantity(value: unknown): number {
+  if (value === '' || value == null) return 0;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const s = String(value).replace(/[$,]/g, '').replace(/[−–]/g, '-').trim();
+  if (!s || s === '-' || s === '.') return 0;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
 
 export function createEmptyItem(overrides: Partial<InventoryItem> = {}): InventoryItem {
   const now = new Date().toISOString();
@@ -109,6 +187,17 @@ export function createEmptyItem(overrides: Partial<InventoryItem> = {}): Invento
     countedBy: '',
     lastCountedAt: now,
     notes: '',
+    svpGl: '',
+    packPrice: '',
+    packUnits: '',
+    countType: 'EACH',
+    itemPrice: '',
+    valueOnHand: '',
+    log1: '',
+    log2: '',
+    log3: '',
+    log4: '',
+    log5: '',
     ...overrides,
   };
 }
@@ -118,65 +207,82 @@ export function generateId(): string {
 }
 
 export function itemToTemplateRow(item: InventoryItem): Record<TemplateColumn, string | number> {
-  // This is the protected master layout supplied by the user (16 columns).
-  // Fields not represented by the master remain intentionally blank rather than
-  // inventing values that could overwrite protected reference data.
+  const count = item.quantityOnHand;
+  const packType = item.form && item.form !== 'Other' ? String(item.form).toLowerCase() : '';
   return {
-    'SKU': item.id,
+    'SVP GL': item.svpGl || '',
     'MANUFACTURER': item.manufacturer,
     'MANUFACTURER NUMBER': item.barcode,
     'ITEM DESCRIPTION': item.drugName,
-    'PACK PRICE': '',
-    'PACK TYPE': item.form,
-    'PACK UNIT': item.packageSize,
-    'COUNT TYPE': item.unit,
-    'COUNT': item.quantityOnHand,
-    'ITEM PRICE': '',
-    'VALUE ON HAND': '',
-    'LOG 1': '',
-    'LOG 2': '',
-    'LOG 3': '',
-    'LOG 4': '',
-    'LOG 5': '',
+    'PACK PRICE': item.packPrice || '',
+    'PACK TYPE': packType,
+    'PACK UNITS': item.packUnits || item.packageSize || '',
+    'COUNT TYPE': item.countType || 'EACH',
+    'COUNT': count ? count : '',
+    'ITEM PRICE': item.itemPrice || '',
+    'VALUE ON HAND': item.valueOnHand || '',
+    'LOG #1': item.log1 || '',
+    'LOG #2': item.log2 || '',
+    'LOG #3': item.log3 || '',
+    'LOG #4': item.log4 || '',
+    'LOG #5': item.log5 || '',
   };
 }
+
 export function templateRowToItem(row: Record<string, any>): InventoryItem {
-  // tolerant parsing - handles both our template and user variations
   const get = (keys: string[]) => {
     for (const k of keys) {
-      if (row[k] !== undefined && row[k] !== null) return String(row[k]).trim();
-      // case-insensitive fallback
+      if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+        return String(row[k]).trim();
+      }
       const found = Object.keys(row).find(rk => rk.toLowerCase() === k.toLowerCase());
-      if (found) return String(row[found]).trim();
+      if (found && row[found] !== undefined && row[found] !== null && String(row[found]).trim() !== '') {
+        return String(row[found]).trim();
+      }
     }
     return '';
   };
-  const getNum = (keys: string[]) => {
-    const v = get(keys);
-    const n = Number(v);
-    return isNaN(n) ? 0 : n;
-  };
+
+  const manufacturerNumber = get(['MANUFACTURER NUMBER', 'Barcode', 'Bar Code', 'NDC', 'UPC']);
+  const barcode = !manufacturerNumber || manufacturerNumber.toLowerCase() === '(blank)' ? '' : manufacturerNumber;
+  const drugName = get(['ITEM DESCRIPTION', 'Drug Name', 'Drug', 'Name', 'Brand Name']);
+  const packType = get(['PACK TYPE', 'Form']);
+  const packUnits = get(['PACK UNITS', 'PACK UNIT', 'Package Size', 'Size', 'Package']);
+  const svpGl = get(['SVP GL', 'GL']);
+  const stableId = get(['SKU', 'Item ID', 'ID', 'ItemID'])
+    || (barcode || drugName ? `mn:${barcode}::${normalizeName(drugName)}` : generateId());
 
   return {
-    id: get(['SKU', 'Item ID', 'ID', 'ItemID']) || generateId(),
-    barcode: get(['MANUFACTURER NUMBER', 'Barcode', 'Bar Code', 'NDC', 'UPC']),
-    drugName: get(['ITEM DESCRIPTION', 'Drug Name', 'Drug', 'Name', 'Brand Name']),
+    id: stableId,
+    barcode,
+    drugName,
     genericName: get(['Generic Name', 'Generic']),
     manufacturer: get(['MANUFACTURER', 'Manufacturer', 'Mfr']),
     concentration: get(['Strength/Concentration', 'Strength', 'Concentration']),
-    form: (get(['PACK TYPE', 'Form']) as DrugForm) || 'Other',
-    packageSize: get(['PACK UNIT', 'Package Size', 'Size', 'Package']),
+    form: (packType as DrugForm) || 'Other',
+    packageSize: packUnits,
     category: (get(['Category']) as DrugCategory) || 'Other',
     location: (get(['Location', 'Loc']) as Location) || 'Main Pharmacy',
     expirationDate: get(['Expiration Date', 'Exp Date', 'Expiration']),
     lotNumber: get(['Lot Number', 'Lot']),
     controlled: get(['Controlled (Y/N)', 'Controlled']).toUpperCase() === 'Y',
     controlledSchedule: get(['Controlled Schedule', 'Schedule']),
-    unit: get(['COUNT TYPE', 'Unit', 'UOM']) || 'bottle',
-    quantityOnHand: getNum(['COUNT', 'Quantity On Hand', 'Qty', 'Quantity', 'Count', 'On Hand']),
+    unit: get(['Unit', 'UOM']) || packType || 'bottle',
+    quantityOnHand: parseQuantity(get(['COUNT', 'Quantity On Hand', 'Qty', 'Quantity', 'Count', 'On Hand'])),
     countedBy: get(['Counted By', 'CountedBy']),
     lastCountedAt: get(['Last Counted', 'LastCounted']) || new Date().toISOString(),
     notes: get(['Notes', 'Note']),
+    svpGl,
+    packPrice: get(['PACK PRICE']),
+    packUnits,
+    countType: get(['COUNT TYPE']) || 'EACH',
+    itemPrice: get(['ITEM PRICE']),
+    valueOnHand: get(['VALUE ON HAND']),
+    log1: get(['LOG #1', 'LOG 1', 'Log 1']),
+    log2: get(['LOG #2', 'LOG 2', 'Log 2']),
+    log3: get(['LOG #3', 'LOG 3', 'Log 3']),
+    log4: get(['LOG #4', 'LOG 4', 'Log 4']),
+    log5: get(['LOG #5', 'LOG 5', 'Log 5']),
   };
 }
 
@@ -187,9 +293,13 @@ export function mergeInventories(
 ): { merged: InventoryItem[]; added: number; updated: number } {
   const map = new Map<string, InventoryItem>();
   const nameMap = new Map<string, string>(); // normalized name -> key
+  const itemKey = (item: InventoryItem) => {
+    const bc = normalizeBarcode(item.barcode);
+    return bc ? `bc:${bc}` : `id:${item.id}`;
+  };
+
   base.forEach(item => {
-    // key by barcode if present, else id
-    const key = item.barcode ? `bc:${item.barcode}` : `id:${item.id}`;
+    const key = itemKey(item);
     map.set(key, item);
     if (item.drugName) {
       nameMap.set(normalizeName(item.drugName), key);
@@ -204,8 +314,8 @@ export function mergeInventories(
     let key: string | undefined;
     let existing: InventoryItem | undefined;
 
-    if (inItem.barcode) {
-      key = `bc:${inItem.barcode}`;
+    if (inItem.barcode && normalizeBarcode(inItem.barcode)) {
+      key = `bc:${normalizeBarcode(inItem.barcode)}`;
       existing = map.get(key);
     }
     if (!existing && inItem.id) {
@@ -255,7 +365,7 @@ export function mergeInventories(
       updated++;
     } else {
       // New item - only name and qty required per user spec
-      const newKey = inItem.barcode ? `bc:${inItem.barcode}` : `id:${inItem.id}`;
+      const newKey = itemKey(inItem);
       map.set(newKey, inItem);
       if (inItem.drugName) {
         nameMap.set(normalizeName(inItem.drugName), newKey);
@@ -317,7 +427,7 @@ export function matchToTemplate(
     }
     // barcode match as fallback
     if (!found && t.barcode) {
-      found = countedItems.find(c => c.barcode && c.barcode === t.barcode && !usedCountedIds.has(c.id));
+      found = countedItems.find(c => c.barcode && barcodesMatch(c.barcode, t.barcode) && !usedCountedIds.has(c.id));
     }
 
     if (found) {

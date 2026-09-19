@@ -1,8 +1,8 @@
-name: Deploy VetCount web preview
+name: Deploy Megatory Live web
 
 on:
   push:
-    branches: [main, arena/01a0b1e7-megatory-live]
+    branches: [main, arena/01a0b59d-megatory-live]
   workflow_dispatch:
 
 permissions:
@@ -31,10 +31,31 @@ jobs:
         run: npm run typecheck && npm test -- --runInBand
       - name: Export web app
         env:
-          EXPO_PUBLIC_API_BASE_URL: ${{ vars.VETCOUNT_API_BASE_URL || 'https://megatory-live.delqurolabs.app/api' }}
+          EXPO_PUBLIC_API_BASE_URL: ${{ vars.MEGATORY_API_BASE_URL || vars.VETCOUNT_API_BASE_URL || 'https://megatory-live.delqurolabs.app/api' }}
         run: npm run build:web
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
+      - name: Custom domain
+        # GitHub Pages reads CNAME to serve the custom domain. public/CNAME is
+        # copied by the exporter; this writes it again in case that changes,
+        # so the domain never silently drops on a tooling upgrade.
+        run: echo 'megatory-live.delqurolabs.app' > dist/CNAME
+      - name: Page title
+        # The exporter emits a <head> with no <title>, leaving the tab blank.
+        run: |
+          node -e '
+            const fs = require("fs");
+            const files = fs.readdirSync("dist").filter((f) => f.endsWith(".html"));
+            for (const f of files) {
+              const p = "dist/" + f;
+              let s = fs.readFileSync(p, "utf8");
+              if (!/<title>/i.test(s)) {
+                s = s.replace(/<head>/i, "<head><title>Megatory Live — Inventory Count</title>");
+                fs.writeFileSync(p, s);
+              }
+            }
+            console.log("title ensured in " + files.length + " html files");
+          '
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

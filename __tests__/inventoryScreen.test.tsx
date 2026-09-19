@@ -13,6 +13,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createEmptyItem, InventoryItem } from '../lib/domain/inventory';
+import { resetKioskMemory } from '../lib/kiosk/session';
 
 const mockRouterPush = jest.fn();
 
@@ -31,7 +32,7 @@ jest.mock(
 // eslint-disable-next-line import/first
 import InventoryScreen from '../app/index';
 
-const INVENTORY_KEY = 'vetcount_inventory_v1';
+const INVENTORY_KEY = 'megatory_live_inventory_v1';
 
 function seed(items: InventoryItem[]) {
   (AsyncStorage.getItem as jest.Mock).mockImplementation(async (key: string) =>
@@ -44,6 +45,7 @@ const SEARCH_PLACEHOLDER = 'Search meds, barcode, brand...';
 describe('InventoryScreen (rendered)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetKioskMemory();
     (AsyncStorage.getItem as jest.Mock).mockReset();
   });
 
@@ -105,20 +107,18 @@ describe('InventoryScreen (rendered)', () => {
     expect(screen.getByText('Meloxicam 1.5mg/mL')).toBeTruthy();
   });
 
-  test('the +1 control routes to /add in addQty mode so the quantity ADDS', async () => {
-    seed([createEmptyItem({ drugName: 'Carprofen 100mg', quantityOnHand: 12 })]);
+  test('the +1 control adds one to the on-hand count immediately', async () => {
+    seed([createEmptyItem({ drugName: 'Carprofen 100mg', quantityOnHand: 12, unit: 'tablet' })]);
 
     render(<InventoryScreen />);
     await screen.findByText('Carprofen 100mg');
 
     fireEvent.click(screen.getByText('+1'));
 
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pathname: '/add',
-        params: expect.objectContaining({ mode: 'addQty' }),
-      }),
-    );
+    await waitFor(() => {
+      expect(screen.getByText('13')).toBeTruthy();
+    });
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   test('survives corrupt storage without crashing the list', async () => {

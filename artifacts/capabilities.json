@@ -1,16 +1,32 @@
 {
   "schema_version": "1.2.0",
-  "captured_at": "2026-09-17T22:00:00Z",
+  "captured_at": "2026-09-19T19:49:23Z",
   "toolchains": [
-    {"name": "node", "version": "22.x"},
-    {"name": "npm", "version": "10.x"},
-    {"name": "expo", "version": "~52.0.46"},
-    {"name": "typescript", "version": "5.3.3"}
+    {
+      "name": "node",
+      "version": "22.22.3"
+    },
+    {
+      "name": "npm",
+      "version": "10.9.8"
+    },
+    {
+      "name": "expo",
+      "version": "52.0.49"
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3"
+    },
+    {
+      "name": "jest",
+      "version": "29.7.0"
+    }
   ],
-  "devices": ["web-companion"],
-  "browsers": ["chrome"],
-  "network_reachability": "full",
+  "devices": [],
+  "browsers": [],
+  "network_reachability": "partial",
   "secret_manager": "unavailable",
   "store_account": "not-applicable",
-  "notes": "Web companion available, native iOS/Android simulators not available in sandbox - blocked gates will be documented"
+  "notes": "Web Metro :8081. No Chrome/Playwright. No simulators. Pages https_enforced=true. Latest deploy Actions 35465432722 = 9549794."
 }

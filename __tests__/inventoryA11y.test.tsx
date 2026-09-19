@@ -12,6 +12,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createEmptyItem, InventoryItem } from '../lib/domain/inventory';
+import { resetKioskMemory } from '../lib/kiosk/session';
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
@@ -27,7 +28,7 @@ jest.mock(
 // eslint-disable-next-line import/first
 import InventoryScreen from '../app/index';
 
-const INVENTORY_KEY = 'vetcount_inventory_v1';
+const INVENTORY_KEY = 'megatory_live_inventory_v1';
 
 function seed(items: InventoryItem[]) {
   (AsyncStorage.getItem as jest.Mock).mockImplementation(async (key: string) =>
@@ -38,6 +39,7 @@ function seed(items: InventoryItem[]) {
 describe('InventoryScreen accessibility', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetKioskMemory();
     (AsyncStorage.getItem as jest.Mock).mockReset();
   });
 
@@ -75,7 +77,6 @@ describe('InventoryScreen accessibility', () => {
       name: /delete carprofen 100mg from this device count/i,
     });
     expect(del).toBeTruthy();
-    // The emoji is still what sighted users see, but it is not the accessible name.
     expect((del.getAttribute('aria-label') || '').toLowerCase()).toContain('delete');
   });
 

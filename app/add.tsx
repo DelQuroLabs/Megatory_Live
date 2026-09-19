@@ -1,37 +1,66 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { InventoryItem, DrugForm, DrugCategory, Location, createEmptyItem, validateItem, COMMON_VET_DRUGS, generateId } from '../lib/domain/inventory';
+import { InventoryItem, DrugForm, DrugCategory, Location, createEmptyItem, validateItem, COMMON_VET_DRUGS, generateId, SVP_GL_CATEGORIES, COUNT_TYPES, parseQuantity } from '../lib/domain/inventory';
 import { loadInventory, saveInventory, loadMeta } from '../lib/storage/inventoryStorage';
+import { loadPerson } from '../lib/kiosk/session';
 
 const FORMS: DrugForm[] = ['Tablet', 'Capsule', 'Chewable', 'Liquid', 'Injectable', 'Ointment', 'Cream', 'Powder', 'Suspension', 'Solution', 'Spot-On', 'Collar', 'Other'];
-const CATEGORIES: DrugCategory[] = ['Antibiotic', 'NSAID', 'Analgesic', 'Sedative/Anesthesia', 'Antiparasitic', 'Vaccine', 'Fluid', 'Controlled Substance', 'Compounded', 'Supplement', 'OTC', 'Other'];
 const LOCATIONS: Location[] = ['Main Pharmacy', 'Surgery', 'Exam 1', 'Exam 2', 'Exam 3', 'Exam 4', 'ICU', 'Lab', 'Refrigerator', 'Controlled Cabinet', 'OTC Shelf', 'Warehouse', 'Other'];
+const GL_OPTIONS = [...SVP_GL_CATEGORIES];
+const FRACTION_CHIPS = ['0.25', '0.5', '0.75', '1', '1.75', '2'];
 
 export default function AddScreen() {
-  const params = useLocalSearchParams<{ id?: string; barcode?: string; mode?: string }>();
+  const params = useLocalSearchParams<{
+    id?: string;
+    barcode?: string;
+    mode?: string;
+    drugName?: string;
+    genericName?: string;
+    manufacturer?: string;
+    concentration?: string;
+    form?: string;
+    packUnits?: string;
+    lookupSource?: string;
+  }>();
   const router = useRouter();
   const [item, setItem] = useState<InventoryItem>(() => createEmptyItem({ barcode: params.barcode || '' }));
   const [qtyToAdd, setQtyToAdd] = useState<string>('');
+  const [qtyText, setQtyText] = useState<string>('0');
   const [isAddMode, setIsAddMode] = useState(false);
   const [deviceName, setDeviceName] = useState('Phone');
+  const [banner, setBanner] = useState<{ kind: 'error' | 'saved'; text: string } | null>(null);
 
   useEffect(() => {
     (async () => {
       const meta = await loadMeta();
-      setDeviceName(meta.deviceName || 'Phone');
+      const person = await loadPerson();
+      setDeviceName(person?.name || meta.deviceName || 'Phone');
       if (params.id) {
         const inv = await loadInventory();
         const found = inv.find(i => i.id === params.id);
         if (found) {
           setItem(found);
+          setQtyText(String(found.quantityOnHand ?? 0));
           if (params.mode === 'addQty') setIsAddMode(true);
         }
-      } else if (params.barcode) {
-        setItem(prev => ({ ...prev, barcode: params.barcode || '' }));
+      } else if (params.barcode || params.drugName) {
+        const form = (params.form as DrugForm) || undefined;
+        setItem(prev => ({
+          ...prev,
+          barcode: params.barcode || prev.barcode,
+          drugName: params.drugName || prev.drugName,
+          genericName: params.genericName || prev.genericName,
+          manufacturer: params.manufacturer || prev.manufacturer,
+          concentration: params.concentration || prev.concentration,
+          form: form && FORMS.includes(form) ? form : prev.form,
+          packUnits: params.packUnits || prev.packUnits,
+          packageSize: params.packUnits || prev.packageSize,
+          notes: params.lookupSource ? `Filled from ${params.lookupSource}` : prev.notes,
+        }));
       }
     })();
-  }, [params.id, params.barcode]);
+  }, [params.id, params.barcode, params.mode, params.drugName, params.lookupSource]);
 
   const update = (field: keyof InventoryItem, value: any) => setItem(prev => ({ ...prev, [field]: value }));
 
@@ -56,17 +85,21 @@ export default function AddScreen() {
   };
 
   const handleSave = async () => {
-    const errors = validateItem(item);
-    if (errors.length) { Alert.alert('Fix errors', errors.join('\n')); return; }
     const inv = await loadInventory();
     let newItem: InventoryItem = { ...item };
     if (isAddMode) {
-      const addQty = Number(qtyToAdd);
-      if (!qtyToAdd.trim() || !Number.isFinite(addQty) || addQty <= 0) { Alert.alert('Invalid quantity', 'Enter a positive number to add'); return; }
+      const addQty = parseQuantity(qtyToAdd);
+      if (!qtyToAdd.trim() || addQty <= 0) {
+        setBanner({ kind: 'error', text: 'Enter a positive number to add (fractions like 0.5 are OK)' });
+        return;
+      }
       newItem.quantityOnHand = (newItem.quantityOnHand || 0) + addQty;
       newItem.lastCountedAt = new Date().toISOString();
       newItem.countedBy = deviceName;
     } else {
+      newItem.quantityOnHand = parseQuantity(qtyText);
+      const errors = validateItem(newItem);
+      if (errors.length) { setBanner({ kind: 'error', text: errors.join(' · ') }); return; }
       if (!newItem.id) newItem.id = generateId();
       newItem.lastCountedAt = new Date().toISOString();
       newItem.countedBy = newItem.countedBy || deviceName;
@@ -75,21 +108,37 @@ export default function AddScreen() {
     let newInv: InventoryItem[];
     if (idx >= 0) { newInv = [...inv]; newInv[idx] = newItem; } else { newInv = [...inv, newItem]; }
     await saveInventory(newInv);
-    Alert.alert('Saved', `${newItem.drugName} - ${newItem.quantityOnHand} ${newItem.unit}`, [
-      { text: 'Back to List', onPress: () => router.replace('/') },
-      { text: 'Scan Next', onPress: () => router.replace('/scan') },
-    ]);
+    setItem(newItem);
+    setQtyText(String(newItem.quantityOnHand ?? 0));
+    setQtyToAdd('');
+    setBanner({ kind: 'saved', text: `Saved ${newItem.drugName || 'item'} — ${newItem.quantityOnHand} ${newItem.unit} to the hospital notebook` });
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 14 }}>
+      {banner && (
+        <View style={[styles.banner, banner.kind === 'error' ? styles.bannerError : styles.bannerSaved]} accessibilityLiveRegion="polite">
+          <Text style={banner.kind === 'error' ? styles.bannerErrorText : styles.bannerSavedText}>{banner.text}</Text>
+          {banner.kind === 'saved' ? (
+            <View style={styles.bannerActions}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to list" style={styles.saveBtn} onPress={() => router.replace('/')}>
+                <Text style={styles.saveBtnText}>Back to list</Text>
+              </TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Scan next bottle" style={styles.cancelBtn} onPress={() => router.replace('/scan')}>
+                <Text style={styles.cancelText}>Scan next</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </View>
+      )}
+
       {isAddMode && (
         <View style={styles.addModeBanner}>
           <Text style={styles.addModeTitle}>Add Quantity Mode</Text>
-          <Text style={styles.addModeText}>Current: {item.quantityOnHand} {item.unit}. Enter amount to ADD.</Text>
-          <TextInput style={styles.qtyInput} value={qtyToAdd} onChangeText={setQtyToAdd} placeholder="Qty to add" accessibilityLabel="Quantity to add" keyboardType="numeric" autoFocus />
+          <Text style={styles.addModeText}>Current: {item.quantityOnHand} {item.unit}. Enter amount to ADD. Fractions like 1.75 are OK.</Text>
+          <TextInput style={styles.qtyInput} value={qtyToAdd} onChangeText={setQtyToAdd} placeholder="Qty to add (1.75 is OK)" accessibilityLabel="Quantity to add" keyboardType="decimal-pad" autoFocus />
           <View style={styles.row}>
-            {['1','2','5','10'].map(n => (
+            {FRACTION_CHIPS.map(n => (
               <TouchableOpacity key={n} accessibilityRole="button" accessibilityLabel={`Add ${n} quantity`} style={styles.chip} onPress={() => setQtyToAdd(n)}><Text style={styles.chipText}>+{n}</Text></TouchableOpacity>
             ))}
           </View>
@@ -98,41 +147,63 @@ export default function AddScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Only Name + Qty required 💫</Text>
-        <Text style={styles.sectionSub}>Everything else optional — smart-matched to template</Text>
+        <Text style={styles.sectionSub}>Everything else optional — smart-matched to the hospital sheet</Text>
+        {params.lookupSource ? (
+          <Text style={styles.sectionSub}>Filled from {params.lookupSource}. Check the bottle before you save.</Text>
+        ) : null}
         <Field label="Drug Name *" value={item.drugName} onChange={(v: string) => { update('drugName', v); handleSuggest(v); }} placeholder="e.g. Cerenia, Carprofen" />
-        <Field label="Barcode (optional)" value={item.barcode} onChange={(v: string) => update('barcode', v)} placeholder="helps matching" />
-        <Field label="Generic (optional)" value={item.genericName} onChange={(v: string) => update('genericName', v)} placeholder="optional" />
+        <Field label="Generic name" value={item.genericName} onChange={(v: string) => update('genericName', v)} placeholder="optional" />
+        <Field label="Manufacturer Number / Barcode" value={item.barcode} onChange={(v: string) => update('barcode', v)} placeholder="helps matching" />
         <Field label="Manufacturer" value={item.manufacturer} onChange={(v: string) => update('manufacturer', v)} placeholder="optional" />
-        <Field label="Strength" value={item.concentration} onChange={(v: string) => update('concentration', v)} placeholder="e.g. 100mg" />
+        <Field label="Concentration" value={item.concentration} onChange={(v: string) => update('concentration', v)} placeholder="e.g. 10 mg/mL" />
+        <Text style={styles.label}>SVP GL (hospital category)</Text>
+        <View style={styles.chipRow}>{GL_OPTIONS.map(g => (
+          <TouchableOpacity key={g} accessibilityRole="button" accessibilityState={{ selected: item.svpGl === g }} accessibilityLabel={`SVP GL ${g}${item.svpGl === g ? ' (selected)' : ''}`} style={[styles.chip, item.svpGl === g && styles.chipActive]} onPress={() => update('svpGl', g)}>
+            <Text style={[styles.chipText, item.svpGl === g && styles.chipTextActive]}>{g}</Text>
+          </TouchableOpacity>
+        ))}</View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Form</Text>
+        <Text style={styles.label}>Pack type</Text>
         <View style={styles.chipRow}>{FORMS.map(f => (<TouchableOpacity key={f} accessibilityRole="button" accessibilityState={{ selected: item.form === f }} accessibilityLabel={`Form ${f}${item.form === f ? ' (selected)' : ''}`} style={[styles.chip, item.form === f && styles.chipActive]} onPress={() => update('form', f)}><Text style={[styles.chipText, item.form === f && styles.chipTextActive]}>{f}</Text></TouchableOpacity>))}</View>
-        <Field label="Package Size" value={item.packageSize} onChange={(v: string) => update('packageSize', v)} placeholder="optional" />
-        <Text style={styles.label}>Category</Text>
-        <View style={styles.chipRow}>{CATEGORIES.map(c => (<TouchableOpacity key={c} accessibilityRole="button" accessibilityState={{ selected: item.category === c }} accessibilityLabel={`Category ${c}${item.category === c ? ' (selected)' : ''}`} style={[styles.chip, item.category === c && styles.chipActive]} onPress={() => update('category', c)}><Text style={[styles.chipText, item.category === c && styles.chipTextActive]}>{c}</Text></TouchableOpacity>))}</View>
+        <Field label="Pack units" value={item.packUnits} onChange={(v: string) => update('packUnits', v)} placeholder="e.g. 100, 10, 12" keyboardType="decimal-pad" />
+        <Text style={styles.label}>Count type</Text>
+        <View style={styles.chipRow}>{COUNT_TYPES.map(t => (
+          <TouchableOpacity key={t} accessibilityRole="button" accessibilityState={{ selected: item.countType === t }} accessibilityLabel={`Count type ${t}${item.countType === t ? ' (selected)' : ''}`} style={[styles.chip, item.countType === t && styles.chipActive]} onPress={() => update('countType', t)}>
+            <Text style={[styles.chipText, item.countType === t && styles.chipTextActive]}>{t}</Text>
+          </TouchableOpacity>
+        ))}</View>
         <Text style={styles.label}>Location</Text>
         <View style={styles.chipRow}>{LOCATIONS.map(l => (<TouchableOpacity key={l} accessibilityRole="button" accessibilityState={{ selected: item.location === l }} accessibilityLabel={`Location ${l}${item.location === l ? ' (selected)' : ''}`} style={[styles.chip, item.location === l && styles.chipActive]} onPress={() => update('location', l)}><Text style={[styles.chipText, item.location === l && styles.chipTextActive]}>{l}</Text></TouchableOpacity>))}</View>
       </View>
 
       <View style={styles.section}>
+        {!isAddMode && (
+          <>
+            <Field label="Count * (fractions OK)" value={qtyText} onChange={setQtyText} placeholder="1.75" keyboardType="decimal-pad" />
+            <View style={styles.row}>
+              {FRACTION_CHIPS.map(n => (
+                <TouchableOpacity key={n} accessibilityRole="button" accessibilityLabel={`Set count to ${n}`} style={styles.chip} onPress={() => setQtyText(n)}><Text style={styles.chipText}>{n}</Text></TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
         <View style={styles.rowBetween}>
-          <View style={{ flex: 1, marginRight: 8 }}><Field label="Expiration" value={item.expirationDate} onChange={(v: string) => update('expirationDate', v)} placeholder="YYYY-MM-DD" /></View>
-          <View style={{ flex: 1, marginLeft: 8 }}><Field label="Lot" value={item.lotNumber} onChange={(v: string) => update('lotNumber', v)} placeholder="Lot #" /></View>
+          <View style={{ flex: 1, marginRight: 8 }}><Field label="Counted By" value={item.countedBy} onChange={(v: string) => update('countedBy', v)} placeholder={deviceName} /></View>
+          <View style={{ flex: 1, marginLeft: 8 }}><Field label="Notes" value={item.notes} onChange={(v: string) => update('notes', v)} placeholder="optional" /></View>
         </View>
-        {!isAddMode && <Field label="Quantity On Hand * (required)" value={String(item.quantityOnHand)} onChange={(v: string) => update('quantityOnHand', Number(v) || 0)} placeholder="0" keyboardType="numeric" />}
-        <View style={styles.rowBetween}>
-          <View style={{ flex: 1, marginRight: 8 }}><Field label="Unit" value={item.unit} onChange={(v: string) => update('unit', v)} placeholder="bottle" /></View>
-          <View style={{ flex: 1, marginLeft: 8 }}><Field label="Counted By" value={item.countedBy} onChange={(v: string) => update('countedBy', v)} placeholder={deviceName} /></View>
-        </View>
-        <Field label="Notes" value={item.notes} onChange={(v: string) => update('notes', v)} placeholder="Optional notes" multiline />
       </View>
 
       <View style={styles.controlledCard}>
-        <View style={styles.controlledHeader}><Text style={styles.controlledTitle}>Controlled Substance</Text><Switch accessibilityLabel="Controlled substance" value={item.controlled} onValueChange={v => update('controlled', v)} trackColor={{ false: '#DCE8F0', true: '#CDE8F0' }} thumbColor={item.controlled ? '#15284C' : '#F8FBFE'} /></View>
-        <Text style={styles.controlledDesc}>For DEA scheduled items. Adds classification to export if needed.</Text>
-        {item.controlled && <View style={{ marginTop: 12 }}><Field label="Schedule II-V" value={item.controlledSchedule || ''} onChange={(v: string) => update('controlledSchedule', v)} placeholder="e.g. II, III, IV, V" /></View>}
+        <View style={styles.controlledHeader}><Text style={styles.controlledTitle}>Controlled Substance (DEA)</Text><Switch accessibilityLabel="Controlled substance" value={item.controlled} onValueChange={v => update('controlled', v)} trackColor={{ false: '#DCE8F0', true: '#CDE8F0' }} thumbColor={item.controlled ? '#15284C' : '#F8FBFE'} /></View>
+        <Text style={styles.controlledDesc}>Exact pills or milliliters in COUNT. Then put the paper-log balance in LOG #1.</Text>
+        {item.controlled && (
+          <View style={{ marginTop: 12 }}>
+            <Field label="Schedule II-V" value={item.controlledSchedule || ''} onChange={(v: string) => update('controlledSchedule', v)} placeholder="e.g. II, III, IV, V" />
+            <Field label="LOG #1 (required) — balance on your controlled log" value={item.log1} onChange={(v: string) => update('log1', v)} placeholder="number from the paper log" keyboardType="decimal-pad" />
+          </View>
+        )}
       </View>
 
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={isAddMode ? `Add ${qtyToAdd || '0'} quantity and save` : 'Save inventory item'} style={styles.saveBtn} onPress={handleSave}><Text style={styles.saveBtnText}>{isAddMode ? `Add ${qtyToAdd || '0'}` : 'Save Item'}</Text></TouchableOpacity>
@@ -162,9 +233,9 @@ const styles = StyleSheet.create({
   label: { fontSize: 11, fontWeight: '800', color: '#475569', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' },
   input: { backgroundColor: '#F8FBFE', borderWidth: 1.5, borderColor: '#DCE8F0', borderRadius: 16, padding: 14, fontSize: 15, fontWeight: '600', color: '#15284C' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 14, gap: 8 },
-  row: { flexDirection: 'row', marginTop: 10, gap: 8 },
+  row: { flexDirection: 'row', marginTop: 10, gap: 8, flexWrap: 'wrap' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between' },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F8FBFE', borderWidth: 1.5, borderColor: '#DCE8F0' },
+  chip: { paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: 'center', borderRadius: 999, backgroundColor: '#F8FBFE', borderWidth: 1.5, borderColor: '#DCE8F0' },
   chipActive: { backgroundColor: '#15284C', borderColor: '#15284C', shadowColor: '#15284C', shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
   chipText: { fontSize: 12, fontWeight: '700', color: '#475569' },
   chipTextActive: { color: 'white', fontWeight: '800' },
@@ -176,4 +247,10 @@ const styles = StyleSheet.create({
   saveBtnText: { color: 'white', fontWeight: '800', fontSize: 16, letterSpacing: -0.3 },
   cancelBtn: { backgroundColor: 'white', borderWidth: 1.5, borderColor: '#DCE8F0', padding: 16, borderRadius: 20, alignItems: 'center' },
   cancelText: { color: '#64748b', fontWeight: '700' },
+  banner: { borderRadius: 24, padding: 16, borderWidth: 1.5 },
+  bannerError: { backgroundColor: '#fff1f2', borderColor: '#fecdd3' },
+  bannerSaved: { backgroundColor: '#ecfdf5', borderColor: '#bbf7d0' },
+  bannerErrorText: { color: '#9f1239', fontWeight: '700', fontSize: 14 },
+  bannerSavedText: { color: '#166534', fontWeight: '800', fontSize: 14 },
+  bannerActions: { marginTop: 12, gap: 8 },
 });

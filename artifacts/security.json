@@ -1,21 +1,25 @@
 {
   "schema_version": "1.2.0",
   "data_flows": [
-    {"entity": "InventoryItem", "purpose": "Local veterinary drug inventory counting", "retention": "Until user clears", "deletion_path": "Settings -> Clear Local Inventory or AsyncStorage.removeItem"},
-    {"entity": "Barcode", "purpose": "Identify medication bottle", "retention": "Stored with item", "deletion_path": "Delete item"},
-    {"entity": "Device Name", "purpose": "Identify which phone counted what for merge", "retention": "Local only", "deletion_path": "Change in Import/Export screen"}
+    {"entity": "InventoryItem", "purpose": "Hospital inventory COUNT and catalog fields", "retention": "Hospital notebook until overwritten; local cache until Clear / forget clock", "deletion_path": "Files → Clear Local (cache only); Forget this clock; notebook on public MQTT remains until overwritten"},
+    {"entity": "Site PIN", "purpose": "Open the hospital notebook (AES-GCM key) and walk-up kiosk register", "retention": "Stored in AsyncStorage with the clock registration", "deletion_path": "Forget this clock"},
+    {"entity": "Counter name", "purpose": "Walk-up sign-in / countedBy", "retention": "Until Lock clock", "deletion_path": "Lock"},
+    {"entity": "Hospital notebook ciphertext", "purpose": "Share COUNT across clocks", "retention": "Retained MQTT message on a public broker", "deletion_path": "Overwrite with a new retain; brokers are third-party and not under Megatory control"}
   ],
   "permissions": ["CAMERA - scan medication barcodes"],
-  "local_storage_protection": "AsyncStorage - no sensitive data, inventory counts only, no encryption needed for preview. For production: consider expo-secure-store for controlled substance logs",
-  "transport_security": "Offline-first, local-only, no network calls in MVP. No TLS/pinning needed. If future online lookup added, will enforce TLS 1.2+",
-  "client_bundle_scan": "passed - grep bundle for secret patterns, no API keys, no tokens, no private endpoints found",
-  "telemetry_review": "No telemetry, no analytics in MVP",
-  "secret_scan": "passed - no .env, no keys, no credentials committed",
-  "dependency_review": "Reviewed xlsx, async-storage, expo-camera - all official, no typosquatting",
-  "advisory_scan": "blocked - npm audit shows 25 vulnerabilities (12 moderate, 12 high, 1 critical) in transitive deps (glob, tar, etc) from expo tooling - not in shipped app bundle, dev-only. Production candidate needs audit fix",
-  "threat_model": "Local-only app: main threat is data loss (mitigated by export), camera permission abuse (only used for scanning), no auth bypass needed, no injection as no server. Controlled substance tracking: ensure countedBy is not spoofed - future: add signature",
+  "local_storage_protection": "AsyncStorage holds inventory cache, kiosk registration including the site PIN in plaintext JSON, and the signed-in name. Not Keychain/Keystore. Preview-phase only — production-candidate must move the PIN off AsyncStorage.",
+  "transport_security": "Notebook sync is MQTT 3.1.1 over WebSocket TLS (wss) to public brokers: broker.emqx.io:8084, broker.hivemq.com:8884, test.mosquitto.org:8081. No certificate pinning. PairDrop is a user-opened https://pairdrop.net tab. Optional extra-API probe is https://megatory-live.delqurolabs.app/api. Google Fonts loaded on web. GitHub Pages https_enforced=true as of 2026-09-19T19:32Z (html_url https://megatory-live.delqurolabs.app/).",
+  "client_bundle_scan": "passed - source grep this turn 0 secret-shaped hits (artifacts/evidence/sec-scan.log). Pages run 35463964638 exported 4f9c108.",
+  "telemetry_review": "No analytics SDK. Counts travel to public MQTT as AES-GCM ciphertext. Topic id includes a 20-hex PIN digest.",
+  "secret_scan": "passed - 0 hits; no .env, keys, or credentials committed",
+  "dependency_review": "Direct deps: expo 52, @e965/xlsx 0.20.3, query-string 7.1.3. No typosquatting on names reviewed.",
+  "advisory_scan": "not-triaged - npm audit 27 vulnerabilities (15 moderate, 11 high, 1 critical), primarily Expo/RN toolchain. Same class as oi-003. Not a silent clean.",
+  "threat_model": "Networked kiosk: (1) public MQTT brokers can see ciphertext, hospital code, and PIN digest in the topic — brute-force of 4-digit PINs is feasible if the topic is known; (2) site PIN in AsyncStorage on a shared iPad is recoverable; (3) last-write-wins notebook has no CRDT — two clocks can clobber COUNT; (4) Test Connection talks to /api which is not the notebook; (5) camera permission only for barcodes. Compensating: AES-GCM with PBKDF2 120k, continue-on-this-clock-only fallback, no privileged API keys in the client.",
   "findings": [
-    {"id": "F-001", "severity": "low", "owner": "dev", "status": "acknowledged - npm audit vulns are dev tooling, not in production bundle"}
+    {"id": "F-SEC-MQTT", "severity": "high", "owner": "human", "status": "open - hospital notebook lives on public MQTT brokers, not the project's own server"},
+    {"id": "F-SEC-PIN-STORAGE", "severity": "medium", "owner": "dev", "status": "open - site PIN stored in AsyncStorage plaintext"},
+    {"id": "F-SEC-ADVISORIES", "severity": "medium", "owner": "dev", "status": "open - 27 npm audit findings untriaged"},
+    {"id": "F-SEC-PAGES-HTTP", "severity": "medium", "owner": "human", "status": "closed 2026-09-19 - Pages https_enforced=true, html_url is https://megatory-live.delqurolabs.app/"}
   ],
   "fixture_origin": "Synthetic - COMMON_VET_DRUGS are fictional examples, no real NDCs, no real PII",
   "user_leak_events": []

@@ -1,29 +1,129 @@
-# VetCount deployment
+# Megatory Live — deployment
 
-## GitHub Pages preview
+The app is an offline-first Expo (SDK 52) client. The web target is a **static
+export**; there is no server-side rendering and no Node process serving the UI.
 
-The workflow at `.github/workflows/deploy-web.yml` builds and deploys the Expo web export. Enable **Settings → Pages → GitHub Actions** in the repository. The workflow runs typecheck, all Jest tests, and `expo export` before publishing.
+## 1. One-time setup (needs a human — a token cannot do this)
 
-The public backend base URL is configured with the repository variable `VETCOUNT_API_BASE_URL`. If it is not set, the build uses:
+**Settings → Pages → Source → "GitHub Actions".**
 
-`https://megatory-live.delqurolabs.app/api`
+Until that is set, `.github/workflows/deploy-web.yml` fails at the
+**Configure Pages** step and nothing is published. This is the only step the
+repository cannot fix for itself; it has failed on every run so far
+(`Configure Pages` → failure, `Upload artifact` / `Deploy` → skipped).
 
-This is a public URL only; do not put API keys or private tokens in repository variables used by the browser bundle.
+## 2. What is actually at `megatory-live.delqurolabs.app` (probed 2026-09-19)
 
-## Existing server
+Probed from a GitHub-hosted runner, because the host is unreachable from
+restricted development environments. The workflow in
+`.github/workflows/probe-backend.yml` reproduces this on demand.
 
-The server must serve the contents of `dist/` over HTTPS and proxy or expose the API under `/api`. Required initial contract for the scaffold is:
+| Check | Result |
+|---|---|
+| DNS | `13.140.43.0` (A) — an AWS host, not GitHub Pages (`185.199.108–111.153`) |
+| TLS | `CN = TRAEFIK DEFAULT CERT`, self-signed, issued 2026-09-18, expires 2027-09-18 |
+| `GET /` | **503** `no available server` |
+| `GET /api/health` | **503** `no available server` |
+| `GET /api/inventory` | **503** `no available server` |
+
+Reading of that:
+
+- **Traefik is installed and terminating TLS** — the box is up and answering
+  HTTP/2. So this is not a server that is down.
+- **No backend is attached.** Traefik returns `503 no available server` when a
+  router matches but has no healthy upstream. There is no `/api/health` to
+  connect to: the API does not exist yet, only the proxy in front of it.
+- **The certificate is not trusted.** Browsers refuse the self-signed default
+  cert, so even DNS and routing aside, the client cannot call this host until a
+  real certificate (Traefik's ACME/Let's Encrypt resolver) is configured.
+
+Consequence for the decision in §3: there is nothing to "connect" the app to
+yet. The client's health probe will report *Unreachable*, which is correct.
+
+## 3. Decide where the domain points — read this before touching DNS
+
+The hostname and the API currently want the *same* name, and that does not work.
+
+Observed on 2026-09-19:
+
+| Host | Resolves to | What that is |
+|---|---|---|
+| `megatory-live.delqurolabs.app` | `13.140.43.0` (A) | your Traefik host (§2) |
+| `delqurolabs.github.io` | `185.199.108–111.153` | the canonical GitHub Pages addresses |
+
+GitHub Pages serves only static files. It cannot answer `POST /api/inventory/sync`.
+So if the frontend is published to Pages **on that hostname**, the API must move
+to a different name — otherwise `GET /api/health` will hit Pages and 404.
+
+**Pick one of these two:**
+
+**A. Pages for the app, separate host for the API (recommended)**
+
+Given §2, this is the path that can go live now: the frontend does not depend on the backend.
+
+- DNS: `megatory-live.delqurolabs.app` → `CNAME delqurolabs.github.io`
+- API: `api.delqurolabs.app` → your server
+- Repo variable `MEGATORY_API_BASE_URL` = `https://api.delqurolabs.app/api`
+- `public/CNAME` (already committed) makes Pages accept the custom domain
+
+**B. Serve everything from your own server**
+- Skip Pages; keep DNS on `13.140.43.0`
+- Serve the contents of the export at `/` and proxy `/api/*` to the backend
+- `EXPO_PUBLIC_API_BASE_URL` can stay `https://megatory-live.delqurolabs.app/api`
+- The CNAME file and the Pages workflow then do nothing — remove the CNAME if
+  you go this route, or Pages will keep trying to claim the hostname
+
+Asset paths in the export are root-absolute (`/_expo/…`), so the app must be
+served at a **domain root**, not a sub-path.
+
+## 3b. Hospital notebook (live on Pages, no Traefik)
+
+GitHub Pages cannot `POST /api`. jsonblob.com now rejects anonymous writes (401), which browsers surface as **Failed to fetch**. The kiosk therefore publishes a PIN-encrypted notebook as a retained MQTT message. Hospital code + site PIN select the topic. The SPA never embeds a GitHub token.
+
+- First clock creates the blob; Files → Copy link is how other clocks join.
+- Wrong PIN cannot decrypt.
+- Last write wins if two clocks save at the same moment — lock/sign-in is meant to take turns.
+- Do **not** point the live app at Traefik `13.140.43.0`; that host is still 503.
+
+## 4. Backend contract — still open
+
+`lib/backend/config.ts` reads `EXPO_PUBLIC_API_BASE_URL`, defaulting to
+`https://megatory-live.delqurolabs.app/api`. `lib/backend/api.ts` implements a
+health probe with an 8s timeout that is wired to the Files screen and covered by
+tests. **Sync is deliberately not wired to any screen**: the request/response
+shapes below are a scaffold, not a confirmed contract.
+
+Assumed, unconfirmed — and per §2, not yet deployed behind Traefik:
 
 - `GET /api/health` → `{ "status": "ok" }`
 - `GET /api/inventory` → inventory payload
 - `POST /api/inventory/sync` → accepted inventory payload
 
-The client adapter is in `lib/backend/api.ts`; it is intentionally not connected to local inventory persistence until the server's authentication, conflict/merge semantics, and file-upload contract are confirmed.
+To finish this, the following are needed from whoever runs the server:
 
-## Go-live checklist
+1. The real paths and payload shapes (does `/api/inventory` return
+   `InventoryItem[]` as stored, or the 16-column template rows?).
+2. Authentication: header scheme, and how tokens are issued to a phone.
+3. Conflict semantics: last-write-wins, or server-side merge of quantities?
+   The client's `mergeInventories` already implements additive merge for
+   multi-device compilation; the server should not double-count if it also merges.
+4. Upload limits and content type for the Excel sync, if files are sent.
+5. CORS: allow the origin the app is served from.
 
-- Configure DNS for `megatory-live.delqurolabs.app` and install a valid TLS certificate.
-- Confirm CORS allows the GitHub Pages origin and the custom server origin.
-- Implement authentication before enabling multi-user sync.
-- Define Excel upload/download endpoints and maximum file sizes.
-- Run the native camera smoke tests separately; GitHub Pages cannot validate native camera behavior.
+## 5. Go-live checklist
+
+- [ ] **Enable GitHub Pages → Source: GitHub Actions** (blocking; human only)
+- [ ] Choose DNS option A or B above and reconcile the existing `13.140.43.0` A record
+- [ ] Install a trusted certificate on the Traefik host (self-signed today — browsers refuse it)
+- [ ] Attach a backend service to Traefik (every route returns `503 no available server`)
+- [ ] Confirm CORS allows the app's origin
+- [ ] Confirm the backend contract in §3, then wire `uploadInventory` / `downloadInventory`
+- [ ] Implement authentication before enabling multi-user sync
+- [ ] Run the manual checks in `docs/manual-verification.md` (camera, native build, visual)
+- [ ] Verify `GET /api/health` from a phone on cellular, not just from this network
+
+## 6. Releasing
+
+Every push to `main` runs typecheck + the full Jest suite + `expo export`, then
+publishes. `npm run build:web` writes `dist/`; `npm run preview` serves a local
+copy of the same export with the Pages-equivalent fallback behaviour.

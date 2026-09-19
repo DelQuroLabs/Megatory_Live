@@ -2,7 +2,10 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
-const BASE_DIR = FileSystem.documentDirectory + 'VetCount/';
+const BASE_DIR = FileSystem.documentDirectory + 'MegatoryLive/';
+// Files written by earlier builds still live here. They stay visible in the
+// file list so nothing already on a device disappears after the rename.
+const LEGACY_BASE_DIR = FileSystem.documentDirectory + 'VetCount/';
 
 export interface ManagedFile {
   name: string;
@@ -30,19 +33,26 @@ export async function saveFileToManaged(name: string, base64Data: string): Promi
 export async function listManagedFiles(): Promise<ManagedFile[]> {
   try {
     await ensureDir();
-    const files = await FileSystem.readDirectoryAsync(BASE_DIR);
     const result: ManagedFile[] = [];
-    for (const f of files) {
-      const uri = BASE_DIR + f;
-      const info = await FileSystem.getInfoAsync(uri);
-      if (info.exists && !info.isDirectory) {
-        result.push({
-          name: f,
-          uri,
-          size: (info as any).size || 0,
-          modified: info.modificationTime || 0,
-          isTemplate: f.toLowerCase().includes('template'),
-        });
+    for (const dir of [BASE_DIR, LEGACY_BASE_DIR]) {
+      let files: string[];
+      try {
+        files = await FileSystem.readDirectoryAsync(dir);
+      } catch {
+        continue; // legacy directory was never created
+      }
+      for (const f of files) {
+        const uri = dir + f;
+        const info = await FileSystem.getInfoAsync(uri);
+        if (info.exists && !info.isDirectory) {
+          result.push({
+            name: f,
+            uri,
+            size: (info as any).size || 0,
+            modified: info.modificationTime || 0,
+            isTemplate: f.toLowerCase().includes('template'),
+          });
+        }
       }
     }
     // newest first
@@ -64,7 +74,7 @@ export async function shareManagedFile(uri: string): Promise<void> {
     return;
   }
   if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri, { dialogTitle: 'Share Vet Inventory File' });
+    await Sharing.shareAsync(uri, { dialogTitle: 'Share Inventory File' });
   } else {
     throw new Error('Sharing not available');
   }

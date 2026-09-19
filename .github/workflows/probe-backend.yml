@@ -1,0 +1,143 @@
+name: Probe backend API
+
+# Diagnostic only. The app is offline-first and never needs this to run.
+#
+# Why this exists: the API host is not reachable from every development
+# environment (including the sandbox this repo is often edited from), so
+# "is the server up and what does it actually return?" was unanswerable.
+# GitHub runners have unrestricted egress, so this probes the real endpoints
+# and posts the result on a PR for review.
+#
+# Safe by construction: GET and OPTIONS only. It never POSTs to /sync, so it
+# cannot mutate inventory on the server.
+#
+# The report is posted as a comment on the branch's open PR. Artifacts and step
+# summaries live on hosts that restricted environments cannot reach, so the
+# comment is the only channel that can be read back.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'API base URL (without trailing path)'
+        required: false
+        default: 'https://megatory-live.delqurolabs.app/api'
+      pr:
+        description: 'PR number to comment the report on (leave blank to skip)'
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: ${{ inputs.base_url || 'https://megatory-live.delqurolabs.app/api' }}
+    steps:
+      - name: Probe DNS, TLS and endpoints
+        run: |
+          set +e
+          {
+            echo "## Backend probe"
+            echo
+            echo "- **Target:** \`$BASE_URL\`"
+            echo "- **Ran:** $(date -u '+%Y-%m-%d %H:%M:%SZ') (GitHub-hosted runner, public egress)"
+            echo
+            echo "### DNS"
+            echo '```'
+            HOST=$(echo "$BASE_URL" | sed -E 's#^https?://##; s#/.*$##')
+            echo "host: $HOST"
+            (command -v dig >/dev/null && dig +short "$HOST" A) || getent hosts "$HOST" || echo "no A record"
+            echo '```'
+            echo
+            echo "### TLS"
+            echo '```'
+            echo | timeout 20 openssl s_client -connect "$HOST:443" -servername "$HOST" 2>/dev/null \
+              | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "no TLS handshake on 443"
+            echo '```'
+          } >> report.md
+
+          probe() {
+            local label="$1" url="$2" method="${3:-GET}"
+            echo "### $label \`$method $url\`" >> report.md
+            echo '```' >> report.md
+            if [ "$method" = "OPTIONS" ]; then
+              curl -sS -m 20 -o /tmp/body.txt -D /tmp/hdr.txt -X OPTIONS "$url" -w 'HTTP %{http_code} in %{time_total}s\n' >> report.md 2>&1
+            else
+              curl -sS -m 20 -o /tmp/body.txt -D /tmp/hdr.txt "$url" -w 'HTTP %{http_code} in %{time_total}s\n' >> report.md 2>&1
+            fi
+            echo "--- response headers ---" >> report.md
+            head -c 800 /tmp/hdr.txt 2>/dev/null >> report.md
+            echo >> report.md
+            echo "--- body (first 600 bytes) ---" >> report.md
+            head -c 600 /tmp/body.txt 2>/dev/null >> report.md
+            echo >> report.md
+            echo '```' >> report.md
+            echo >> report.md
+          }
+
+          ORIGIN=$(echo "$BASE_URL" | sed -E 's#^(https?://[^/]+).*$#\1#')
+          probe "Origin root" "$ORIGIN/"
+          probe "Health" "$BASE_URL/health"
+          probe "Inventory" "$BASE_URL/inventory"
+          probe "Sync (method discovery only)" "$BASE_URL/inventory/sync" OPTIONS
+
+          # If TLS verification failed there is nothing above to read, so retry
+          # with verification off purely to discover what the server serves.
+          # -k is a diagnostic here, never a fix: browsers will still refuse a
+          # self-signed certificate, so the client cannot talk to this host
+          # until a trusted certificate is installed.
+          if grep -q "SSL certificate problem\|HTTP 000" report.md; then
+            {
+              echo "### Insecure follow-up (certificate verification off)"
+              echo
+              echo "Diagnostics only. A browser will still reject this host until it has a"
+              echo "trusted certificate, so the app cannot reach these endpoints as-is."
+              echo
+            } >> report.md
+            probe_insecure() {
+              local label="$1" url="$2"
+              echo "#### $label \`$url\` (curl -k)" >> report.md
+              echo '```' >> report.md
+              curl -sk -m 20 -o /tmp/body.txt -D /tmp/hdr.txt "$url" -w 'HTTP %{http_code} in %{time_total}s\n' >> report.md 2>&1
+              echo "--- response headers ---" >> report.md
+              head -c 800 /tmp/hdr.txt 2>/dev/null >> report.md
+              echo >> report.md
+              echo "--- body (first 600 bytes) ---" >> report.md
+              head -c 600 /tmp/body.txt 2>/dev/null >> report.md
+              echo >> report.md
+              echo '```' >> report.md
+              echo >> report.md
+            }
+            probe_insecure "Origin root" "$ORIGIN/"
+            probe_insecure "Health" "$BASE_URL/health"
+            probe_insecure "Inventory" "$BASE_URL/inventory"
+            probe_insecure "Traefik dashboard" "$ORIGIN:8080/api/rawdata"
+          fi
+
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-probe-report
+          path: report.md
+
+      - name: Comment report on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR="${{ inputs.pr }}"
+          if [ -z "$PR" ]; then
+            # Push-triggered runs have no input, so find the open PR for this branch.
+            PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$GITHUB_REF_NAME" \
+                   --state open --json number --jq '.[0].number // empty')
+          fi
+          if [ -n "$PR" ]; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file report.md
+            echo "posted report on PR #$PR"
+          else
+            echo "no open PR for $GITHUB_REF_NAME; report is in the job summary only"
+          fi

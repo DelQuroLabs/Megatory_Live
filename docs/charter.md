@@ -1,4 +1,4 @@
-# Charter — VetCount Mobile Inventory
+# Charter — Megatory Live (veterinary inventory)
 
 ## Problem and primary user
 Veterinary general practice needs to conduct regular inventory counts of medications. Current process uses a locked Excel template where only count columns are editable. Staff need a mobile solution to scan bottles, auto-fill drug details, enter quantities on hand, and compile counts from multiple phones into a final export that matches the exact template placement.
@@ -9,11 +9,13 @@ Primary user: Veterinary technician / practice manager conducting inventory in p
 A user can scan a veterinary medication bottle barcode (or enter manually), have drug details auto-populated into the correct template columns, enter quantity on hand that adds to the running count, and export/import/merge Excel files across multiple devices to produce a final compiled inventory file.
 
 ## Explicit non-goals
-- No cloud backend required for MVP (local-only, offline-first)
 - No controlled substance DEA reporting automation (just tracking)
 - No integration with practice management software (Cornerstone, eVetPractice) in v1
-- No price/cost tracking beyond quantity
 - Not a full pharmacy dispensing system
+- Megatory does not send email (no SMTP / Gmail login). Files hands the .xlsx to Mail, AirDrop, or PairDrop.
+- Do not commit the full priced hospital catalog workbook
+
+**Superseded (2026-09-19, user):** “no cloud backend / counts on-device until Excel merge” — the user now wants kiosk login + one hospital notebook, not per-device counts. Current code uses public MQTT brokers as a stand-in; that is **not** the intended own-server.
 
 ## Platforms, stack, quality profile
 - Platforms: iOS, Android, web-companion for preview/testing
@@ -21,9 +23,9 @@ A user can scan a veterinary medication bottle barcode (or enter manually), have
 - Quality: Offline-first, fast scan, honest errors, accessible hit targets, no secrets in bundle
 
 ## Connectivity, data, identity assumptions
-- Connectivity: offline-first — all counting works offline, import/export works with local files
-- Data: local-only — inventory stored on device, exported as Excel
-- Identity: local-only — no login required, countedBy field is free text per device
+- Connectivity: hybrid-sync — counting can continue on this clock if the notebook is unreachable; shared COUNT uses the hospital notebook
+- Data: anonymous-remote notebook (PIN-encrypted) plus a local cache. Intended: the project’s own server. Current: retained MQTT on public brokers (emqx / hivemq / test.mosquitto)
+- Identity: walk-up kiosk (hospital code + site PIN + counter name). Not Apple/Google accounts. PIN currently stored in AsyncStorage
 
 ## Declared phase
 preview — vertical slice that works end-to-end on device and web companion
@@ -43,11 +45,14 @@ preview — vertical slice that works end-to-end on device and web companion
 - [ ] Final export matches template structure ready to copy/paste into protected master file
 
 ## Risks, dependencies, unresolved decisions
-- Risk: Barcode lookup for vet drugs has no single free API — will use local DB seeded from common vet formulary + manual entry
-- Risk: Excel file handling in React Native needs polyfills
+- Risk: Hospital notebook on **public MQTT brokers** — ciphertext only, but topic includes hospital code + 20-hex PIN digest; 4-digit PINs are brute-forceable. User asked for own-server storage.
+- Risk: Last-write-wins notebook (no merge on concurrent clocks)
+- Risk: Site PIN in AsyncStorage on a shared iPad
+- Risk: GitHub Pages `https_enforced` is still false (human setting)
 - Dependency: expo-camera permissions on iOS/Android
-- Unresolved: Exact column order of user's existing template — will provide configurable mapping and default template based on typical vet practice: Item ID, Barcode, Drug Name, Generic Name, Manufacturer, Strength/Concentration, Form, Package Size, Category, Location, Expiration, Lot, Controlled (Y/N), Unit, Qty On Hand, Counted By, Last Counted, Notes
-- Decision: Quantity adds to count by default — user said "that will get added to the count" — implement Add mode with option to Set
+- Decision: Quantity adds to count by default
+- Decision: Export layout is MEGATORY_HOSPITAL CODE 3Q2026 (Instructions / INVENTORY SHEET / CATEGORIES)
+- Unresolved: Human compare against the real OneDrive workbook; custom domain DNS; PR #2; native smoke waiver actor
 
 ## Current completion label
 incomplete
