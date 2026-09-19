@@ -263,15 +263,49 @@ export function megatoryExportFilename(hospitalCode: string, period = '3Q2026'):
   return `MEGATORY_${code}_${period}.xlsx`;
 }
 
-export function downloadExcel(items: InventoryItem[], filename = 'MEGATORY_HOSPITAL_3Q2026.xlsx') {
-  const buffer = generateExcelBuffer(items);
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+export function downloadExcelBuffer(buffer: ArrayBuffer, filename: string) {
+  const blob = new Blob([buffer], { type: XLSX_MIME });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function downloadExcel(items: InventoryItem[], filename = 'MEGATORY_HOSPITAL_3Q2026.xlsx') {
+  downloadExcelBuffer(generateExcelBuffer(items), filename);
+}
+
+/**
+ * Real OS share sheet when the browser allows it (Safari/Chrome on phones:
+ * Mail, AirDrop, Files, Messages). Otherwise a real .xlsx download.
+ * Megatory does not send email itself — no mailbox to set up.
+ */
+export async function shareOrDownloadExcel(
+  items: InventoryItem[],
+  filename = 'MEGATORY_HOSPITAL_3Q2026.xlsx',
+): Promise<'shared' | 'downloaded' | 'aborted'> {
+  const buffer = generateExcelBuffer(items);
+  if (typeof File !== 'undefined' && typeof navigator !== 'undefined') {
+    const file = new File([buffer], filename, { type: XLSX_MIME });
+    const nav = navigator as Navigator & {
+      canShare?: (data: { files?: File[] }) => boolean;
+      share?: (data: ShareData) => Promise<void>;
+    };
+    try {
+      if (nav.canShare?.({ files: [file] }) && nav.share) {
+        await nav.share({ files: [file], title: filename });
+        return 'shared';
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') return 'aborted';
+    }
+  }
+  downloadExcelBuffer(buffer, filename);
+  return 'downloaded';
 }
 
 export function generateTemplateBuffer(): ArrayBuffer {

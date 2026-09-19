@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform, Linking } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useFocusEffect } from 'expo-router';
 import { loadInventory, saveInventory, loadMeta, saveMeta, clearInventory } from '../lib/storage/inventoryStorage';
-import { generateExcelBuffer, parseExcelBuffer, downloadExcel, megatoryExportFilename } from '../lib/storage/excel';
+import { generateExcelBuffer, parseExcelBuffer, downloadExcel, shareOrDownloadExcel, megatoryExportFilename } from '../lib/storage/excel';
 import { mergeInventories } from '../lib/domain/inventory';
 import { ensureDir, listManagedFiles, deleteManagedFile, shareManagedFile, saveFileToManaged, arrayBufferToBase64, ManagedFile, formatFileSize } from '../lib/storage/fileManager';
 import { BACKEND_BASE_URL } from '../lib/backend/config';
@@ -59,7 +59,14 @@ export default function ImportExportScreen() {
       if (items.length === 0) { setStatus('Nothing to export — add or import items first'); return; }
       const buffer = generateExcelBuffer(items);
       const fileName = megatoryExportFilename(hospitalCode || deviceName);
-      if (Platform.OS === 'web') { downloadExcel(items, fileName); setStatus(`Exported ${items.length} items as ${fileName}`); return; }
+      if (Platform.OS === 'web') {
+        const how = await shareOrDownloadExcel(items, fileName);
+        if (how === 'aborted') { setStatus('Share canceled'); return; }
+        setStatus(how === 'shared'
+          ? `Shared ${items.length} items as ${fileName} — pick Mail, AirDrop, or Files`
+          : `Downloaded ${fileName}. Attach it in Mail, AirDrop it from Files, or drop it on pairdrop.net`);
+        return;
+      }
       await ensureDir();
       const base64 = arrayBufferToBase64(buffer);
       const uri = await saveFileToManaged(fileName, base64);
@@ -149,9 +156,27 @@ export default function ImportExportScreen() {
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Save device name" style={styles.btn} onPress={handleSaveDeviceName}><Text style={styles.btnText}>Save Device</Text></TouchableOpacity>
       </View>
 
+      <View style={[styles.card, styles.soft1]}>
+        <Text style={styles.cardTitle}>📬 Hand the Excel to another device</Text>
+        <Text style={styles.cardDesc}>
+          Megatory does not have its own mailbox. Export makes a real .xlsx. Then the phone’s share sheet, Mail, AirDrop, or PairDrop carries the file. Nothing to set up — no SMTP, no Gmail login inside this app.
+        </Text>
+        <Text style={styles.step}>Mail: Export → share sheet → Mail (or open the download and attach it).</Text>
+        <Text style={styles.step}>AirDrop: Export → share sheet → AirDrop, or Files app → the download → Share → AirDrop. Both Apple devices, Wi‑Fi + Bluetooth on, AirDrop set to Contacts Only or Everyone for 10 minutes.</Text>
+        <Text style={styles.step}>PairDrop (Apple ↔ Android, or any two browsers): both open https://pairdrop.net on the same Wi‑Fi → one sends the .xlsx → other taps accept → Files → Import that file.</Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Open PairDrop in the browser"
+          style={[styles.btn, styles.btnSecondary]}
+          onPress={() => Linking.openURL('https://pairdrop.net')}
+        >
+          <Text style={styles.btnText}>Open PairDrop</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>⇅ Import / Export</Text>
-        <Text style={styles.cardDesc}>Import the hospital MEGATORY file first. Count. Export writes the same three tabs: Instructions, INVENTORY SHEET, CATEGORIES.</Text>
+        <Text style={styles.cardDesc}>Import the hospital MEGATORY file first. Count. Export writes the same three tabs: Instructions, INVENTORY SHEET, CATEGORIES. On this website, Export opens the phone share sheet when it can, otherwise it downloads the file.</Text>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Export inventory to Excel" style={[styles.btn, styles.btnPrimary]} onPress={handleExport}><Text style={styles.btnText}>📤 Export to Excel</Text></TouchableOpacity>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Import Excel or CSV inventory" style={[styles.btn, styles.btnSecondary]} onPress={handleImport}><Text style={styles.btnText}>📥 Import Excel / CSV</Text></TouchableOpacity>
         <View style={styles.pillBar}>
