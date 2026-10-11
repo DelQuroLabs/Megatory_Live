@@ -14,7 +14,9 @@
     "lint": "eslint . --ext .ts,.tsx || echo 'lint not configured'",
     "test": "jest",
     "test:domain": "jest --selectProjects domain",
-    "test:components": "jest --selectProjects components"
+    "test:components": "jest --selectProjects components",
+    "test:server": "node --test \"server/test/*.test.mjs\"",
+    "sync": "node server/main.mjs"
   },
   "dependencies": {
     "@e965/xlsx": "^0.20.3",

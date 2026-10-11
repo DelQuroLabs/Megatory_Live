@@ -9,7 +9,10 @@ export type KioskRegistration = {
   hospitalCode: string;
   clockName: string;
   sitePin: string;
+  /** Notebook id on the self-hosted sync (or `local:…`, or an old MQTT id before it moves). */
   blobId: string;
+  /** The notebook's random secret from the invite link / QR. Missing on clocks registered before the move. */
+  syncKey?: string;
   registeredAt: string;
 };
 
@@ -59,14 +62,26 @@ export async function loadPerson(): Promise<KioskPerson | null> {
   return personMem ?? null;
 }
 
-export async function registerClock(input: { hospitalCode: string; clockName: string; sitePin: string; blobId: string }): Promise<KioskRegistration> {
+export async function registerClock(input: { hospitalCode: string; clockName: string; sitePin: string; blobId: string; syncKey?: string }): Promise<KioskRegistration> {
   const reg: KioskRegistration = {
     hospitalCode: normalizeHospital(input.hospitalCode),
     clockName: input.clockName.trim(),
     sitePin: input.sitePin,
     blobId: input.blobId,
+    ...(input.syncKey ? { syncKey: input.syncKey } : {}),
     registeredAt: new Date().toISOString(),
   };
+  await AsyncStorage.setItem(KIOSK_KEY, JSON.stringify(reg));
+  registrationMem = reg;
+  emit();
+  return reg;
+}
+
+/** Point an existing clock at a different notebook (used when an old MQTT notebook moves to the sync server). */
+export async function updateRegistration(patch: Pick<KioskRegistration, 'blobId' | 'syncKey'>): Promise<KioskRegistration | null> {
+  const current = await loadRegistration();
+  if (!current) return null;
+  const reg = { ...current, ...patch };
   await AsyncStorage.setItem(KIOSK_KEY, JSON.stringify(reg));
   registrationMem = reg;
   emit();

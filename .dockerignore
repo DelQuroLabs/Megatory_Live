@@ -1,0 +1,10 @@
+.git
+node_modules
+dist
+data
+artifacts
+image-search
+uploads
+*.log
+.env
+.env.*

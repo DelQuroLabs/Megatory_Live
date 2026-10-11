@@ -15,7 +15,7 @@ import {
   KioskRegistration,
   KioskPerson,
 } from '../lib/kiosk/session';
-import { openHospitalNotebook, pushNotebook } from '../lib/kiosk/notebook';
+import { createHospitalNotebook, joinHospitalNotebook, pushNotebook } from '../lib/kiosk/notebook';
 import { loadCachedInventory, loadMeta, saveInventory, saveMeta } from '../lib/storage/inventoryStorage';
 import { InventoryItem } from '../lib/domain/inventory';
 
@@ -67,14 +67,15 @@ export function useKioskHeader(): { label: string; onLock: () => void } {
   return { label, onLock: () => { lockClock(); } };
 }
 
-function inviteFromUrl(): { hospitalCode?: string; blobId?: string } {
+function inviteFromUrl(): { hospitalCode?: string; blobId?: string; syncKey?: string } {
   if (typeof window === 'undefined') return {};
   return parseKioskQuery(window.location.search || '');
 }
 
 function RegisterClock({ onDone }: { onDone: () => void }) {
   const invite = inviteFromUrl();
-  const joining = Boolean(invite.blobId);
+  // only a link/QR that carries the notebook secret can join; an old link without it starts the register flow
+  const joining = Boolean(invite.blobId && invite.syncKey);
   const [hospital, setHospital] = useState(invite.hospitalCode || '');
   const [clockName, setClockName] = useState('');
   const [pin, setPin] = useState('');
@@ -82,8 +83,8 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState('');
   const [allowLocal, setAllowLocal] = useState(false);
 
-  const finish = async (code: string, blobId: string, items: InventoryItem[], localOnly: boolean) => {
-    const registered = await registerClock({ hospitalCode: code, clockName: clockName.trim(), sitePin: pin, blobId });
+  const finish = async (code: string, blobId: string, items: InventoryItem[], localOnly: boolean, syncKey?: string) => {
+    const registered = await registerClock({ hospitalCode: code, clockName: clockName.trim(), sitePin: pin, blobId, syncKey });
     if (items.length) await saveInventory(items, { localOnly: true });
     else {
       const cached = await loadCachedInventory();
@@ -92,7 +93,7 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
     const meta = await loadMeta();
     await saveMeta({ ...meta, deviceName: clockName.trim(), hospitalCode: code });
     if (typeof window !== 'undefined' && window.history?.replaceState) {
-      const next = kioskUrl(window.location.origin, { hospitalCode: code, blobId });
+      const next = kioskUrl(window.location.origin, { hospitalCode: code, blobId, syncKey });
       window.history.replaceState({}, '', next);
     }
     onDone();
@@ -110,8 +111,13 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
         await finish(code, `local:${Date.now()}`, [], true);
         return;
       }
-      const opened = await openHospitalNotebook({ hospitalCode: code, sitePin: pin });
-      await finish(code, opened.blobId, opened.items, false);
+      if (joining) {
+        const items = await joinHospitalNotebook({ blobId: invite.blobId!, syncKey: invite.syncKey!, hospitalCode: code, sitePin: pin });
+        await finish(code, invite.blobId!, items, false, invite.syncKey);
+        return;
+      }
+      const created = await createHospitalNotebook({ hospitalCode: code, sitePin: pin });
+      await finish(code, created.blobId, created.items, false, created.syncKey);
     } catch (e: any) {
       setAllowLocal(true);
       setError(e?.message || 'Could not reach the hospital notebook. Check Wi‑Fi and try again, or continue on this clock only.');
@@ -127,7 +133,7 @@ function RegisterClock({ onDone }: { onDone: () => void }) {
       <Text style={styles.sub}>
         {joining
           ? 'Same hospital code and site PIN as the other clock. Then every phone shares one notebook.'
-          : 'Like Dayforce WebClock: hospital code, clock name, site PIN. Other phones type the same hospital code and PIN — that opens the same notebook.'}
+          : 'Like Dayforce WebClock: hospital code, clock name, site PIN. To add another phone, scan the Share QR on a clock that is set up, then type the same PIN.'}
       </Text>
 
       <Text style={styles.label}>Hospital code</Text>
