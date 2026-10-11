@@ -2,7 +2,7 @@ name: Deploy Megatory Live web
 
 on:
   push:
-    branches: [main, arena/01a0b59d-megatory-live]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
