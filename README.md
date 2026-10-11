@@ -25,7 +25,7 @@ node scripts/validate_records.cjs   # validate artifacts/ against schemas/
 ✅ **Quantity adds to count** → enter qty on hand, it ADDS to running total (not overwrite)  
 ✅ **Inventory list** → search by drug/barcode/manufacturer, filter by location  
 ✅ **Excel import/export** → generates file matching locked template (only Qty editable concept)  
-✅ **Kiosk + hospital notebook** → register like Dayforce WebClock; every clock with the site PIN writes the same COUNT  
+✅ **Kiosk + hospital notebook** → register like Dayforce WebClock; other clocks join with the Share QR + site PIN and write the same COUNT (self-hosted sync, end-to-end encrypted — see docs/DEPLOYMENT.md §3b)  
 ✅ **Offline-first** → works with no network, local storage  
 ✅ **Vet domain fidelity** → Forms, Categories, Locations specific to vet practice, Controlled Substance tracking  
 

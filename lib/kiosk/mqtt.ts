@@ -252,8 +252,10 @@ export async function mqttGet(topic: string): Promise<string | null> {
   });
 }
 
-export async function mqttPut(topic: string, payload: string): Promise<void> {
-  await withAnyBroker(async (ws, io) => {
+/** Publish a retained message to one broker. An empty payload deletes the retained copy there. */
+export async function mqttPutTo(broker: { url: string; protocols?: string[] }, topic: string, payload: string): Promise<void> {
+  const { ws, io } = await handshake(broker.url, broker.protocols);
+  try {
     send(ws, encodePublish(topic, payload, 7));
     const start = Date.now();
     while (Date.now() - start < 4000) {
@@ -261,5 +263,7 @@ export async function mqttPut(topic: string, payload: string): Promise<void> {
       if (packets.some(p => p.type === 'puback')) return;
     }
     // QoS0-ish brokers may swallow PUBACK; the retain was still sent.
-  });
+  } finally {
+    io.close();
+  }
 }

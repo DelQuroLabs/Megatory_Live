@@ -76,14 +76,36 @@ Given §2, this is the path that can go live now: the frontend does not depend o
 Asset paths in the export are root-absolute (`/_expo/…`), so the app must be
 served at a **domain root**, not a sub-path.
 
-## 3b. Hospital notebook (live on Pages, no Traefik)
+## 3b. Hospital notebook — self-hosted sync on Coolify
 
-GitHub Pages cannot `POST /api`. jsonblob.com now rejects anonymous writes (401), which browsers surface as **Failed to fetch**. The kiosk therefore publishes a PIN-encrypted notebook as a retained MQTT message. Hospital code + site PIN select the topic. The SPA never embeds a GitHub token.
+The notebook used to be a retained message on **public MQTT test brokers**: anyone listening could
+see the topic names, brute-force the 4–8 digit PIN from them, and overwrite or delete the notebook.
+It now lives on our own server (`server/sync.mjs`, no npm dependencies), deployed on Coolify with the
+web app in one container (`Dockerfile`).
 
-- First clock creates the blob; Files → Copy link is how other clocks join.
-- Wrong PIN cannot decrypt.
-- Last write wins if two clocks save at the same moment — lock/sign-in is meant to take turns.
-- Do **not** point the live app at Traefik `13.140.43.0`; that host is still 503.
+- **Still end-to-end encrypted** with the site PIN in the browser — the server never sees inventory.
+- **Access needs the notebook id + its random secret**, which travel only in the invite link / Share QR
+  (`?ns=…&nb=…&k=…`). The PIN is never in the link. The server stores only a SHA-256 of the secret.
+- **New clocks join by scanning the Share QR** on a clock that is set up, then typing the PIN.
+  Typing hospital code + PIN alone no longer finds a notebook.
+- **Saves must be the next revision** (409 otherwise; the app retries once), so two clocks can't
+  silently overwrite each other. Creating and reading are rate-limited.
+- **Moving old notebooks:** the first clock that registers (or syncs) with an old hospital code + PIN
+  copies the MQTT notebook to the server and wipes the public copy on all three brokers. Any later old
+  clock finds nothing to move and keeps working locally until it scans the new QR — it never creates
+  a second notebook.
+
+### Coolify setup
+1. **+ New Resource → Repository** (this repo), Build Pack **Dockerfile**, port **8080**.
+2. **Persistent Storage**: mount a volume at **`/data`** (the notebooks database lives there).
+3. **Domain**: `https://megatory-live.delqurolabs.app` (point DNS at the Coolify server). The container
+   serves the site and `/api`, so GitHub Pages is no longer needed (and the repo can be private).
+4. **Health check**: `/api/health`.
+5. Optional env: `ALLOWED_ORIGINS` (other web origins that may call the API, comma-separated),
+   build arg `EXPO_PUBLIC_API_BASE_URL` if the API lives elsewhere. `TRUST_PROXY=1` is already set.
+6. After the first deploy: open the site, register the first clock, then add others with its Share QR.
+
+Local: `npm run sync` (`DATA_DIR`, `WEB_DIR`, `PORT`), tests: `npm run test:server`.
 
 ## 4. Backend contract — still open
 
